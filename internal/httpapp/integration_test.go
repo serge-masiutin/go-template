@@ -65,6 +65,9 @@ func TestAccountAndOwnershipFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, err := users.Create(ctx, strings.Repeat("a", 255)+"@example.test", "integration-password", false); err == nil {
+		t.Fatal("created an account whose address exceeds the login limit")
+	}
 	owner, err := users.Create(ctx, "owner@example.test", "integration-password", true)
 	if err != nil {
 		t.Fatal(err)

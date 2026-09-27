@@ -12,6 +12,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const MaxEmailBytes = 254
+
 var ErrCredentials = errors.New("invalid email or password")
 
 type User struct {
@@ -36,8 +38,8 @@ func New(pool *pgxpool.Pool) (*Store, error) {
 func (s *Store) Create(ctx context.Context, email, password string, admin bool) (User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	parsed, err := mail.ParseAddress(email)
-	if err != nil || parsed.Address != email {
-		return User{}, fmt.Errorf("email must be a valid address")
+	if err != nil || parsed.Address != email || len(email) > MaxEmailBytes {
+		return User{}, fmt.Errorf("email must be a valid address with at most 254 bytes")
 	}
 	if len(password) < 12 || len(password) > 72 {
 		return User{}, fmt.Errorf("password must contain 12 to 72 bytes")

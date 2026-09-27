@@ -41,7 +41,7 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email, password := input.Email, input.Password
-	if len(email) > 254 || len(password) > 72 {
+	if len(email) > accounts.MaxEmailBytes || len(password) > 72 {
 		a.invalid(w, r, "/login", "email", "Invalid email or password.")
 		return
 	}
