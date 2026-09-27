@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -42,3 +43,14 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: bin/test-browser
       - run: docker build -t go-template:ci .
+      - name: Smoke test production container
+        run: |
+          docker run --rm --network host \
+            -e DATABASE_URL="$TEST_DATABASE_URL" -e PUBLIC_URL=https://starter.example.test \
+            --entrypoint /app/manage go-template:ci migrate
+          docker run -d --name starter-container-test --network host \
+            -e DATABASE_URL="$TEST_DATABASE_URL" -e PUBLIC_URL=https://starter.example.test \
+            go-template:ci
+          trap 'docker rm -f starter-container-test >/dev/null' EXIT
+          curl --retry 15 --retry-delay 1 --retry-connrefused -fsS http://127.0.0.1:3000/health/ready
+          curl -fsS http://127.0.0.1:3000/login >/dev/null
