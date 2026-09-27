@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+test -z "$(gofmt -l cmd internal tests/browserfixture)"
+go mod tidy -diff
+go mod verify
+go vet ./...
+go test -race ./...
+npx prettier --check web/src .storybook tests/browser '*.ts' 'scripts/*.mjs'
+npm run build
+npm run test
+npm run build:storybook
+node scripts/check-skills.mjs

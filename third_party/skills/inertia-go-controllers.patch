@@ -1,0 +1,939 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,115 +1,88 @@
+ ---
+-name: inertia-rails-controllers
++name: inertia-go-controllers
+ description: >-
+-  ALWAYS `render inertia: { key: data }` to pass data as props — instance variables are NOT auto-passed
+-  (only alba-inertia does that). Rails controller patterns for Inertia.js: render inertia, prop types
+-  (defer, optional, merge, scroll), shared data, flash, PRG redirects, validation errors. Use when
+-  writing controllers that load data, display records, or serve Inertia responses. CRITICAL: external
+-  URLs (Stripe/OAuth) MUST use inertia_location, NEVER redirect_to.
++  Go HTTP handlers for Gonertia and React: explicit rendering, regular/deferred/optional/merge/scroll
++  props, shared request data, session flash, 303 redirects, validation errors and authorization.
++  Use when loading records or serving Inertia pages. External navigation uses Inertia.Location.
++
+ ---
+ 
+-# Inertia Rails Controllers
+-
+-Server-side patterns for Rails controllers serving Inertia responses.
++## Go project contract
++
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
++
++
++# Inertia Go Controllers
++
++Server-side patterns for Go handlers serving Inertia responses.
+ 
+ **Before adding a prop, ask:**
+-- **Needed on every page?** → `inertia_share` in a base controller (`InertiaController`), not a per-action prop
+-- **Expensive to compute?** → `InertiaRails.defer` — page loads fast, data streams in after
+-- **Only needed on partial reload?** → `InertiaRails.optional` — skipped on initial load
+-- **Reference data that rarely changes?** → `InertiaRails.once` — cached across navigations
++- **Needed on every page?** → Request middleware and `inertia.SetProp`.
++- **Expensive to compute?** → `inertia.Defer` after measuring the query.
++- **Only needed on partial reload?** → `inertia.Optional`.
++- **Stable reference data?** → `inertia.Once`, with the installed adapter's limitations.
+ 
+ **NEVER:**
+-- Use `redirect_to` for external URLs (Stripe, OAuth, SSO) — it returns 302 but the Inertia client tries to parse the response as JSON, causing a broken redirect. Use `inertia_location` (returns 409 + `X-Inertia-Location` header).
+-- Use `errors.full_messages` for validation errors — it produces flat strings without field keys, so errors can't be mapped to the corresponding input fields on the frontend. Use `errors.to_hash(true)`.
+-- Use `inertia.defer`, `Inertia.defer`, or `inertia_rails.defer` — the correct syntax is `InertiaRails.defer { ... }`. All prop helpers are module methods on the `InertiaRails` constant.
+-- Assume instance variables are auto-passed as props — they are NOT (unless `alba-inertia` gem is configured). Every action that passes props to the frontend MUST call `render inertia: { key: data }`.
+-- Use `success`/`error` as flash keys without updating `config.flash_keys` — Rails defaults to `notice`/`alert`. Custom keys must be added to both the initializer config and the `FlashData` TypeScript type.
++- Share a user, session, or request-dependent closure through global `ShareProp`.
++- Serialize persistence records with secret/private fields.
++- Return flat validation messages without field keys.
++- Invent Rails adapter methods or automatic type/resource discovery.
++- Use a normal external redirect for an Inertia navigation.
+ 
+ ## Render Syntax
+ 
+-> **`default_render: true` TRAP:** This setting only auto-infers the component
+-> name from controller/action — it does **NOT** auto-pass instance variables as
+-> props. Writing `@posts = Post.all` in an action with `default_render: true`
+-> renders the correct component but sends **zero data** to the frontend.
+-> Instance variables are only auto-serialized as props when `alba-inertia` gem
+-> is configured — check `Gemfile` before relying on this. Without it, you MUST
+-> use `render inertia: { posts: data }` to pass any data to the page.
+->
+-> Empty actions (`def index; end`) are correct ONLY for pages that need no data
+-> (e.g., a static dashboard page, a login form). If the action queries the
+-> database, it MUST call `render inertia:` with data.
+-
+-| Situation | Syntax | Component path |
+-|-----------|--------|----------------|
+-| Action loads data | `render inertia: { users: data }` | Inferred from controller/action |
+-| Action loads NO data (static page) | Empty action or `render inertia: {}` | Inferred from controller/action |
+-| Rendering a different page | `render inertia: 'errors/show', props: { error: e }` | Explicit path |
+-
+-**Rule of thumb:** If your action touches the database, it MUST call `render inertia:` with data.
+-If the action body is empty, the page receives only shared props (from `inertia_share`).
+-
+-```ruby
+-# CORRECT — data passed as props
+-def index
+-  render inertia: { users: users_data, stats: InertiaRails.defer { ExpensiveQuery.run } }
+-end
+-
+-# CORRECT — static page, no data needed
+-def index; end
+-
+-# WRONG — @posts is NEVER sent to the frontend (without alba-inertia)
+-def index
+-  @posts = Post.all
+-end
+-```
+-
+-> **Note:** If the project uses the `alba-inertia` gem (check `Gemfile`), instance
+-> variables are auto-serialized as props and explicit `render inertia:` is not needed.
+-> See the `alba-inertia` skill for that convention.
++Every handler names the page and passes its props explicitly. There is no controller-name
++inference, automatic instance-variable serialization, or inherited base-controller state.
++
++```go
++if err := i.Render(w, r, "Users/Index", inertia.Props{"users": summaries}); err != nil {
++    fail(w, r, err)
++    return
++}
++```
++
++Use an explicit empty props set for a static page. Load records through an authorized query,
++map them to DTOs, and handle errors before rendering. The page name must resolve in the
++React entrypoint; an unknown page is a contract error.
+ 
+ ## Prop Types
+ 
+-**`InertiaRails.defer`** — NOT `inertia.defer`, NOT `Inertia.defer`. All prop helpers are module methods on `InertiaRails`.
++Use `inertia "github.com/romsar/gonertia/v3"`; helpers are package functions, not methods
++on a Rails constant. Verify the pinned adapter before using combinations.
+ 
+ | Type | Syntax | Behavior |
+-|------|--------|----------|
+-| Regular | `{ key: value }` | Always evaluated, always included |
+-| Lazy | `-> { expensive_value }` | Included on initial page render, lazily evaluated on partial reloads |
+-| Optional | `InertiaRails.optional { ... }` | Only evaluated on partial reload requesting it |
+-| Defer | `InertiaRails.defer { ... }` | Loaded after initial page render |
+-| Defer (grouped) | `InertiaRails.defer(group: 'name') { ... }` | Grouped deferred — fetched in parallel |
+-| Once | `InertiaRails.once { ... }` | Resolved once, remembered across navigations |
+-| Merge | `InertiaRails.merge { ... }` | Appended to existing array (infinite scroll) |
+-| Deep merge | `InertiaRails.deep_merge { ... }` | Deep merged into existing object |
+-| Always | `InertiaRails.always { ... }` | Included even in partial reloads |
+-| Scroll | `InertiaRails.scroll { ... }` | Scroll-aware prop for infinite scroll |
+-
+-```ruby
+-def index
+-  render inertia: {
+-    filters: filter_params,
+-    messages: -> { messages_scope.as_json },
+-    stats: InertiaRails.defer { Dashboard.stats },
+-    chart: InertiaRails.defer(group: 'analytics') { Dashboard.chart },
+-    countries: InertiaRails.once { Country.pluck(:name, :code) },
+-    posts: InertiaRails.merge { @posts.as_json },
+-    csrf: InertiaRails.always { form_authenticity_token },
+-  }
+-end
+-```
++| --- | --- | --- |
++| Regular | `inertia.Props{"key": value}` | Included when requested by the response |
++| Lazy | `func() (any, error) { return query(ctx) }` | Evaluated when the prop is selected |
++| Optional | `inertia.Optional(loader)` | Omitted initially; explicitly requested later |
++| Deferred | `inertia.Defer(loader)` | Separate authorized request after initial render |
++| Grouped defer | `inertia.Defer(loader, "analytics")` | Named deferred group |
++| Once | `inertia.Once(value)` | Basic once-prop support; no invented expiry API |
++| Merge | `inertia.Merge(items)` | Merge into client prop |
++| Deep merge | `inertia.DeepMerge(value)` | Deep-merge supported shapes |
++| Always | `inertia.Always(value)` | Included during partial reloads |
++| Scroll | `inertia.Scroll(items, inertia.WithMetadata(metadata))` | Explicit pagination metadata |
++
++Wrap expensive work in a loader. `inertia.Defer(expensiveQuery())` already executed the
++query and cannot defer that work. Each follow-up request must authenticate and authorize.
+ 
+ ### Deferred Props — Full Stack Example
+ 
+ Server defers slow data, client shows fallback then swaps in content:
+ 
+-```ruby
+-# Controller
+-def show
+-  render inertia: {
+-    basic_stats: Stats.quick_summary,
+-    analytics: InertiaRails.defer { Analytics.compute_slow },
+-  }
+-end
++```go
++props := inertia.Props{
++    "basic_stats": summary,
++    "analytics": inertia.Defer(func() (any, error) { return analytics.Compute(r.Context()) }),
++}
++if err := i.Render(w, r, "Dashboard", props); err != nil { fail(w, r, err) }
+ ```
+ 
+ ```tsx
+@@ -135,132 +108,96 @@
+ 
+ ## Shared Data
+ 
+-Use `inertia_share` in controllers — it needs controller context (`current_user`,
+-request). The initializer only handles `config.*` settings (version, flash_keys).
+-
+-```ruby
+-class ApplicationController < ActionController::Base
+-  # Static
+-  inertia_share app_name: 'MyApp'
+-
+-  # Using lambdas (most common)
+-  inertia_share auth: -> { { user: current_user&.as_json(only: [:id, :name, :email, :role]) } }
+-
+-  # Conditional
+-  inertia_share if: :user_signed_in? do
+-    { notifications: -> { current_user.unread_notifications_count } }
+-  end
+-end
+-```
+-
+-Lambda and action-scoped variants are in [`references/configuration.md`](references/configuration.md).
+-
+-**Evaluation order:** Multiple `inertia_share` calls merge top-down. If a child
+-controller shares the same key as a parent, the child's value wins. Block and lambda
+-shares are lazily evaluated per-request — they don't run for non-Inertia requests.
++Use `inertia.SetProp` / `SetProps` on the request context. Shared user data is an explicit
++small DTO, not a session object or the entire stored user. Immutable application constants
++can use `ShareProp` during initialization; never mutate it for an individual request.
++
++```go
++ctx := inertia.SetProps(r.Context(), inertia.Props{"auth": AuthProps{User: userDTO}})
++next.ServeHTTP(w, r.WithContext(ctx))
++```
++
++Page-specific fields stay on the page. Keep key names and optionality aligned with
++`InertiaConfig.sharedPageProps` in TypeScript. Read
++[configuration](references/configuration.md) for session and middleware order.
+ 
+ ## Flash Messages
+ 
+-Flash is automatic. Configure exposed keys if needed:
+-
+-```ruby
+-# config/initializers/inertia_rails.rb
+-InertiaRails.configure do |config|
+-  config.flash_keys = %i[notice alert toast] # default: %i[notice alert]
+-end
+-```
+-
+-Use standard Rails flash in controllers:
+-```ruby
+-redirect_to users_path, notice: "User created!"
+-# or
+-flash.alert = "Something went wrong"
+-redirect_to users_path
+-```
++Go does not provide Rails flash automatically. Gonertia's `FlashProvider` is implemented
++by `internal/httpapp/flash.go` over SCS sessions, stored in PostgreSQL. Keep field errors,
++flash messages, and history-clear flags independent and consumed once.
++
++```go
++ctx := inertia.SetFlash(r.Context(), inertia.Flash{"notice": "Saved"})
++i.Redirect(w, r.WithContext(ctx), "/users", http.StatusSeeOther)
++```
++
++Client flash keys must match the declared TypeScript flash shape. Do not put private
++messages into global props. Verify the provider's storage and error behavior before
++adding complex flash payloads.
+ 
+ ## Redirects & Validation Errors
+ 
+-After create/update/delete, always redirect (Post-Redirect-Get). Standard Rails
+-`redirect_to` works. The Inertia-specific part is validation error handling:
+-
+-```ruby
+-def create
+-  @user = User.new(user_params)
+-  if @user.save
+-    redirect_to users_path, notice: "Created!"
+-  else
+-    redirect_back_or_to new_user_path, inertia: { errors: @user.errors.to_hash(true) }
+-  end
+-end
+-```
+-
+-**`to_hash` vs `to_hash(true)`:** `to_hash` gives `{ name: ["can't be blank"] }`,
+-`to_hash(true)` gives `{ name: ["Name can't be blank"] }`. Keys must match input
+-`name` attributes — mismatched keys mean errors won't display next to the right field.
+-
+-**NEVER use `errors.full_messages`** — it produces flat strings without field keys,
+-so errors can't be mapped to the corresponding input fields on the frontend.
++After create/update/delete, redirect with 303 (Post-Redirect-Get). Invalid form values
++also redirect with field errors persisted across the request. Malformed JSON or types
++produce 400. An Inertia form does not consume an ordinary API's bare 422 response.
++
++```go
++ctx := inertia.SetValidationErrors(r.Context(), inertia.ValidationErrors{
++    "email": "Enter a valid email address.",
++})
++i.Redirect(w, r.WithContext(ctx), "/users/new", http.StatusSeeOther)
++```
++
++Keys must match input names exactly. Use a known local destination instead of trusting
++a user-supplied `Referer`. Do not persist password input or arbitrary request bodies.
+ 
+ ## Authorization as Props
+ 
+-Pass permissions as per-resource `can` hash — frontend controls visibility,
+-server enforces access. See `inertia-rails-controllers` + `inertia-rails-pages` skills.
+-
+-**MANDATORY — READ ENTIRE FILE** when implementing authorization props:
+-[`references/authorization.md`](references/authorization.md) (~40 lines) — full-stack
+-`can` pattern with Action Policy/Pundit/CanCanCan examples.
+-
+-**Do NOT load** if not passing permission data to the frontend.
+-
+-## External Redirects (`inertia_location`)
+-
+-**CRITICAL:** `redirect_to` for external URLs breaks Inertia — the client
+-receives a 302 but tries to handle it as an Inertia response (JSON), not a
+-full page redirect. `inertia_location` returns 409 with `X-Inertia-Location`
+-header, which tells the client to do `window.location = url`.
+-
+-```ruby
+-# Stripe checkout — MUST use inertia_location, not redirect_to
+-def create
+-  checkout_session = Current.user.payment_processor.checkout(
+-    mode: "payment",
+-    line_items: "price_xxx",
+-    success_url: enrollments_url,
+-    cancel_url: course_url(@course),
+-  )
+-  inertia_location checkout_session.url
+-end
+-```
+-
+-Use `inertia_location` for any URL outside the Inertia app: payment
+-providers, OAuth, external services.
++Pass per-resource permissions only to control visibility; the server enforces them.
++Use policy functions and ownership-scoped queries. Never accept actor IDs or roles from
++the form as authority. Read [authorization](references/authorization.md) when adding `can` props.
++
++## External Redirects (`Location`)
++
++Use `i.Location(w, r, destination)` for navigation outside the Inertia application.
++For an Inertia request it returns 409 with `X-Inertia-Location`; ordinary requests receive
++a redirect. Validate the destination against the operation's trusted provider/allowlist.
++Do not redirect to arbitrary form input.
++
++```go
++i.Location(w, r, checkout.URL)
++```
+ 
+ ## History Encryption
+ 
+-Encrypts page data in browser history state — `config.encrypt_history = Rails.env.production?`.
+-Use `redirect_to path, inertia: { clear_history: true }` on logout/role change.
+-Full setup with server-side and client-side examples is in
+-[`references/configuration.md`](references/configuration.md).
++Use `inertia.WithEncryptHistory()` and `inertia.ClearHistory(r.Context())` for logout or
++identity changes. Persist the clear flag over the redirect with the flash provider.
++Encryption does not replace authorization, session revocation, or `Cache-Control: no-store`.
++Read [configuration](references/configuration.md) for the complete boundary.
+ 
+ ## Configuration
+ 
+-See [`references/configuration.md`](references/configuration.md) for all
+-`InertiaRails.configure` options (version, encrypt_history, flash_keys, etc.).
++Read [configuration](references/configuration.md) for initialization, Vite assets,
++versioning, flash, request-scoped props, and session middleware.
+ 
+ ## Troubleshooting
+ 
+-| Symptom | Cause | Fix |
+-|---------|-------|-----|
+-| 302 loop on Stripe/OAuth redirect | `redirect_to` for external URL | Use `inertia_location` — it returns 409 + `X-Inertia-Location` header |
+-| Errors don't display next to fields | Error keys don't match input `name` | `to_hash` keys must match input `name` attributes exactly |
+-| TS2305: `postsPath` not found in `@/routes` | js-routes not regenerated after adding routes | Run `rails js_routes:generate` after changing `config/routes.rb` |
++| Symptom | Cause to inspect | Fix |
++| --- | --- | --- |
++| External redirect opens an Inertia error | Ordinary redirect to provider | Use `i.Location` |
++| Field error disappears after redirect | Missing/broken FlashProvider or session middleware | Verify persistence and consume-once behavior |
++| Wrong user's shared data | Per-request mutation of global props | Use request context |
++| 403 on submit | Missing CSRF header | Pass current `csrfToken` through `X-CSRF-Token` |
++| Empty or stale page | Wrong component name or partial reload keys | Check Go render call and React page contract |
++| Once options missing | Rails-only expiry options copied | Use the supported Go API; recheck adapter source |
+ 
+ ## Related Skills
+-- **Form error display** → `inertia-rails-forms`
+-- **Flash toast UI** → `inertia-rails-pages` (access) + `shadcn-inertia` (Sonner)
+-- **Deferred on client** → `inertia-rails-pages` (`<Deferred>` component)
+-- **Type-safe props** → `inertia-rails-typescript` or `alba-inertia` (serializers)
+-- **Testing** → `inertia-rails-testing`
++- **Form error display** → `inertia-go-forms`
++- **Flash toast UI** → `inertia-go-pages` (access) + `shadcn-inertia` (Sonner)
++- **Deferred on client** → `inertia-go-pages` (`<Deferred>` component)
++- **Type-safe props** → `inertia-go-typescript` or `go-serialization` (serializers)
++- **Testing** → `inertia-go-testing`
+ 
+ ## References
+ 
+@@ -273,5 +210,5 @@
+ usage — the table above is sufficient.
+ 
+ Load [`references/configuration.md`](references/configuration.md) (~180 lines) only when
+-setting up `InertiaRails.configure` for the first time or debugging configuration
++setting up Gonertia initialization for the first time or debugging configuration
+ issues. **Do NOT load** for routine controller work.
+--- original/references/authorization.md
++++ adapted/references/authorization.md
+@@ -1,39 +1,19 @@
+-# Authorization as Props
++# Authorization Props
+ 
+-Pass permissions as props — the frontend decides what to **show**, the server
+-decides what to **allow**. Never check permissions client-side only.
++The server owns access. A `can` prop controls UI visibility only; replaying a hidden
++request must still fail. Preserve the original per-resource permission pattern.
+ 
+-## Controller Pattern
+-
+-```ruby
+-def show
+-  @user = User.find(params[:id])
+-  render inertia: {
+-    user: @user.as_json(only: [:id, :name, :email]),
+-    can: {
+-      edit: allowed_to?(:edit?, @user),
+-      delete: allowed_to?(:destroy?, @user),
+-    },
+-  }
+-end
++```go
++type Permissions struct { Update bool `json:"update"`; Delete bool `json:"delete"` }
++permissions := Permissions{Update: CanUpdate(actor, post), Delete: CanDelete(actor, post)}
+ ```
+ 
+-## Frontend Pattern
+-
+ ```tsx
+-export default function Show({ user, can }: Props) {
+-  return (
+-    <>
+-      <h1>{user.name}</h1>
+-      {can.edit && <Link href={`/users/${user.id}/edit`}>Edit</Link>}
+-      {can.delete && <DeleteButton userId={user.id} />}
+-    </>
+-  )
+-}
++{post.can.update && <Link href={`/posts/${post.id}/edit`}>Edit</Link>}
+ ```
+ 
+-## Key Rules
+-
+-- **Always enforce server-side** — `can` props control UI visibility, not access. The `update`/`destroy` actions must independently authorize.
+-- **Per-record, not global** — pass `can` per resource, not a blanket `isAdmin` flag. A user may edit their own profile but not others.
+-- **Default to Action Policy** — examples use `allowed_to?(:edit?, @user)` from [Action Policy](https://actionpolicy.evilmartians.io/). For projects already using Pundit (`policy(@user).edit?`) or CanCanCan (`can?(:edit, @user)`), use those instead.
++Resolve the actor from the authenticated session. Scope collections and mutations by
++ownership/tenant in SQL. Keep pure policy rules testable without HTTP. If an operation
++has worker/CLI callers, enforce the same policy at the shared operation boundary where
++appropriate. Test owner, non-owner, missing session, admin, revoked admin, and foreign
++record IDs. Never serialize private records just to let React hide them.
+--- original/references/configuration.md
++++ adapted/references/configuration.md
+@@ -1,148 +1,52 @@
+-# Inertia Rails Configuration
++# Gonertia Configuration
+ 
+-## Table of Contents
++## Initialization
+ 
+-- [Initializer](#initializer)
+-- [Version Tracking](#version-tracking)
+-- [Flash Keys](#flash-keys)
+-- [History Encryption](#history-encryption)
+-- [Error Handling](#error-handling)
+-- [SSR Configuration](#ssr-configuration)
+-- [Middleware](#middleware)
++Construct one Inertia instance at startup. Configure Vite from the build manifest or
++an explicit development hot file. Do not infer production mode from whichever file
++happens to exist. Asset versions must change when the build changes.
+ 
+----
+-
+-## Initializer
+-
+-```ruby
+-# config/initializers/inertia_rails.rb
+-InertiaRails.configure do |config|
+-  # Asset version — triggers full page reload when assets change
+-  config.version = ViteRuby.digest
+-
+-  # Flash keys exposed to client (default: %i[notice alert])
+-  config.flash_keys = %i[notice alert toast]
+-
+-  # Encrypt browser history state (default: false)
+-  config.encrypt_history = Rails.env.production?
+-
+-  # Always include errors hash in response (default: false)
+-  config.always_include_errors_hash = true # true will be default in the next major release
+-
+-  # Deep merge shared data instead of shallow merge (default: false)
+-  config.deep_merge_shared_data = false
+-
+-  # Component path resolver (default: infers from controller/action)
+-  config.component_path_resolver = ->(path:, action:) {
+-    "#{path}/#{action}"
+-  }
+-end
++```go
++i, err := inertia.New(rootHTML,
++    inertia.WithFlashProvider(provider),
++    inertia.WithEncryptHistory(),
++)
++if err != nil { return err }
+ ```
+ 
+-## Version Tracking
++## Shared Data
+ 
+-Inertia uses version tracking to detect asset changes and trigger
+-full page reloads when the frontend bundle changes.
++Immutable app constants may use `ShareProp`. User, authorization, locale, CSRF, and
++request-specific data use `inertia.SetProps` on the request context. Concurrent requests
++must never mutate a shared instance's user-specific state.
+ 
+-```ruby
+-# With ViteRuby (recommended)
+-config.version = ViteRuby.digest
++## Middleware Order
+ 
+-# With Propshaft
+-config.version = Rails.application.config.assets.version
++Session loading wraps request authentication/CSRF and Gonertia middleware. The session
++must be available before the flash provider executes. Database errors must fail the
++request; validate your provider before relying on redirect persistence.
+ 
+-# Manual version string
+-config.version = '1.0.0'
++## Flash and Validation
+ 
+-# Lambda (evaluated per request)
+-config.version = -> { Rails.application.config.asset_version }
+-```
+-
+-## Flash Keys
+-
+-Controls which Rails flash keys are exposed to the Inertia client.
+-
+-```ruby
+-# Default: only notice and alert
+-config.flash_keys = %i[notice alert]
+-
+-# Add custom keys
+-config.flash_keys = %i[notice alert toast]
+-```
+-
+-Access on client: `usePage().flash.notice`, `usePage().flash.alert`, etc.
++The SCS-backed provider keeps validation errors, flash messages, and history flags
++separate. Read actual `internal/httpapp/flash.go` before changing serialization. Consume
++messages once. Never store passwords or entire form bodies as flashed input.
+ 
+ ## History Encryption
+ 
+-Encrypts page data in browser history state. Without it, sensitive props are
+-stored in plaintext and visible via back/forward navigation or devtools.
++`WithEncryptHistory()` enables browser-history encryption. `ClearHistory` on logout or
++identity change is transported across the redirect. This does not revoke sessions or
++remove the need for server-side authorization and no-store responses.
+ 
+-**Enable in production only** — encryption can cause issues with HMR and
+-hot-reloading in development:
++## Assets and Versions
+ 
+-```ruby
+-config.encrypt_history = Rails.env.production?
+-```
++Vite uses `web/src/app.tsx` as entrypoint and `web/build/manifest.json` as its manifest.
++Use the manifest checksum as production asset version. The dev hot file belongs in
++ignored `tmp/`; production must never honor a stale hot file. Build and check the app
++without a running Vite process before publishing the image.
+ 
+-**Clear history** on logout to prevent back-button access to authenticated pages:
++## Errors and Verification
+ 
+-```ruby
+-# Server-side — triggers client to clear encrypted history
+-def destroy
+-  sign_out(current_user)
+-  redirect_to root_path, inertia: { clear_history: true }
+-end
+-```
+-
+-```tsx
+-// Client-side — clear history programmatically (rotates encryption key)
+-import { router } from '@inertiajs/react'
+-router.clearHistory()
+-```
+-
+-**When to use `clear_history`:** logout, role change, account switching — any
+-moment when the previous session's data should not be accessible via back button.
+-
+-## Error Handling
+-
+-```ruby
+-# Always include errors hash (even when empty)
+-config.always_include_errors_hash = true
+-```
+-
+-Custom error page for non-Inertia requests:
+-```ruby
+-# app/controllers/application_controller.rb
+-rescue_from ActiveRecord::RecordNotFound do |e|
+-  if request.inertia?
+-    render inertia: 'errors/not-found', props: { message: e.message }, status: 404
+-  else
+-    render file: Rails.public_path.join('404.html'), status: 404
+-  end
+-end
+-```
+-
+-## SSR Configuration
+-
+-```ruby
+-# config/initializers/inertia_rails.rb
+-InertiaRails.configure do |config|
+-  config.ssr_enabled = true
+-  config.ssr_url = "http://localhost:13714"
+-end
+-```
+-
+-Vite SSR setup:
+-```ts
+-// vite.config.ts
+-export default defineConfig({
+-  plugins: [
+-    ruby(),
+-    react(),
+-    tailwindcss(),
+-  ],
+-  ssr: {
+-    noExternal: ['@inertiajs/react'],
+-  },
+-})
+-```
++Verify first HTML load, Inertia JSON navigation, partial reload, validation redirect,
++external Location, role revocation, and logout. Check the pinned Gonertia code when an
++API differs from the upstream Rails guide; no Rails initializer exists in this project.
+--- original/references/prop-types.md
++++ adapted/references/prop-types.md
+@@ -1,6 +1,6 @@
+ # Prop Types — Detailed Reference
+ 
+-Each prop type with real-world examples for inertia-rails 3.17+.
++Prop loading and merge behavior checked against Gonertia v3.0.0. Domain/store names in snippets illustrate a feature to implement.
+ 
+ ## Table of Contents
+ 
+@@ -17,60 +17,42 @@
+ 
+ ## Regular Props
+ 
+-Always included in the initial page response. Wrap in `-> {}` to skip evaluation during partial reloads that don't request them.
++Plain values are included initially. A loader must have one of Gonertia's supported signatures, such as `func(context.Context) (any, error)`; a function returning `([]User, error)` is not interchangeable with that signature.
+ 
+-```ruby
+-render inertia: {
+-  filters: { search: params[:search], sort: params[:sort] },
+-  users: -> { User.where(active: true).as_json(only: [:id, :name, :email]) },
+-  total_count: -> { User.active.count },
++```go
++props := inertia.Props{
++    "filters": filterDTO,
++    "users": func(ctx context.Context) (any, error) {
++        return store.List(ctx, actor.ID)
++    },
+ }
+ ```
+ 
+-With `router.reload({ only: ['filters'] })`, `users` and `total_count` are never evaluated.
+-
+-Rule of thumb: wrap anything involving a query in `-> {}`. Use plain values only for cheap data like params or literals.
++During a partial reload only selected loaders run. Keep loaders pure queries, scoped to the current actor, cancellable, and safe for Gonertia's concurrent resolution. Do not share a single pgx connection/transaction between parallel loaders.
+ 
+ ## Optional Props
+ 
+-Only evaluated when explicitly requested via partial reload headers.
+-Saves computation on initial page load.
+-
+-```ruby
+-render inertia: {
+-  users: User.active.as_json(only: [:id, :name]),
+-  # Only computed when client requests it
+-  export_data: InertiaRails.optional { User.active.to_csv },
+-  detailed_stats: InertiaRails.optional { Analytics.compute_detailed },
+-}
++```go
++"exportData": inertia.Optional(func(ctx context.Context) (any, error) {
++    return reports.ExportPreview(ctx, actor.ID)
++}),
+ ```
+ 
+-Client requests optional props with `router.reload`:
+-```tsx
+-// Only fetches export_data, skips everything else
+-router.reload({ only: ['export_data'] })
+-```
++Optional data is absent initially and evaluated only when requested. The client can use `router.reload({ only: ['exportData'] })`. Large file exports use a download route, not a giant prop.
+ 
+ ## Deferred Props
+ 
+-Loaded automatically after the initial page render. The page loads fast
+-with a placeholder, then deferred data streams in.
+-
+-```ruby
+-render inertia: {
+-  # Fast — included in initial response
+-  course: @course.as_json(only: [:id, :title, :description]),
+-
+-  # Slow — loaded after page renders
+-  reviews: InertiaRails.defer { @course.reviews.includes(:user).as_json },
+-
+-  # Grouped — fetched together in a single request
+-  chart_data: InertiaRails.defer(group: 'analytics') { Analytics.chart_for(@course) },
+-  engagement: InertiaRails.defer(group: 'analytics') { Analytics.engagement_for(@course) },
+-}
++```go
++"reviews": inertia.Defer(func(ctx context.Context) (any, error) {
++    return reviews.List(ctx, actor.ID, courseID)
++}),
++"chart": inertia.Defer(func(ctx context.Context) (any, error) {
++    return analytics.Chart(ctx, actor.ID, courseID)
++}, "analytics"),
+ ```
+ 
+-React side with `<Deferred>`:
++Deferred values load in subsequent requests, not a streaming response. Every request repeats authentication and authorization. The initial payload contains deferred metadata rather than a null value for each prop.
++
+ ```tsx
+ <Deferred data="reviews" fallback={<ReviewsSkeleton />}>
+   <ReviewsList />
+@@ -79,185 +61,61 @@
+ 
+ ## Once Props
+ 
+-Resolved once per session, remembered across navigations.
+-Use for reference data that rarely changes.
+-
+-```ruby
+-render inertia: {
+-  # Fetched once, cached across navigations
+-  countries: InertiaRails.once { Country.pluck(:name, :code) },
+-  timezones: InertiaRails.once { ActiveSupport::TimeZone::MAPPING.keys },
+-  roles: InertiaRails.once { User::ROLES },
+-}
+-```
++`inertia.Once(value)` in Gonertia v3.0.0 includes the prop initially and skips it on ordinary partial reloads unless requested. It does **not** implement every cross-navigation cache/expiry option from other server adapters. Do not describe it as a server session cache or use it for revocable permissions. Verify protocol support before adding newer client once-prop features.
+ 
+ ## Merge Props
+ 
+-Appended to existing array on the client. Use for accumulating data across
+-partial reloads — new items are added to the existing list without replacing it.
+-
+-When merging arrays, you may use the `match_on` parameter to match existing items
+-by a specific field and update them instead of appending new ones.
+-
+-For **infinite scroll**, prefer `InertiaRails.scroll` (see [Scroll Props](#scroll-props))
+-which handles scroll-aware loading automatically. Use `merge` for patterns where
+-data accumulates from user actions or background updates:
+-
+-```ruby
+-# Activity log — poll or ActionCable triggers router.reload({ only: ['activities'] })
+-render inertia: {
+-  activities: InertiaRails.merge { @recent_activities.as_json },
+-}
+-
+-# Chat / live feed — new messages appended via partial reload
+-# update existing ones by id
+-render inertia: {
+-  messages: InertiaRails.merge(match_on: 'id')) { @messages.as_json(only: [:id, :body, :created_at]) },
+-}
+-
+-# Nested data
+-InertiaRails.merge(append: 'data', match_on: 'data.id') { post_data }
+-
+-# Same as above, but using a hash shortcut...
+-InertiaRails.merge(append: { data: 'id' }) { post_data }
+-
+-# Multiple properties with different match fields
+-InertiaRails.merge(append: { 'users.data' => 'id', 'messages' => 'uuid', }) { complex_data }
++```go
++"messages": inertia.Merge(messageDTOs).MatchOn("id"),
++"feed": inertia.Merge(feedDTO).Append("data").MatchOn("data.id"),
+ ```
+ 
+-Client-side, `router.reload({ only: ['messages'] })` fetches the new batch
+-and Inertia appends it to the existing `messages` array automatically.
++Merge applies during partial reloads; a full visit replaces the prop. IDs must be stable. Avoid appending every historical row on each poll; define the batch/cursor contract and test duplicate handling.
+ 
+-**Reset on fresh visit:** Merge only appends during partial reloads. A full
+-page visit (navigation, `router.get`) replaces the prop entirely — no stale
+-accumulation across pages.
++```tsx
++router.reload({ only: ['messages'] })
++```
+ 
+ ## Always Props
+ 
+-Included even in partial reloads (which normally only include
+-requested props). Use sparingly for data that must always be fresh.
++```go
++ctx := inertia.SetProp(r.Context(), "csrfToken", inertia.Always(token))
++```
+ 
+-```ruby
+-render inertia: {
+-  users: User.all.as_json,
+-  # Always included, even when client requests only: ['users']
+-  csrf: InertiaRails.always { form_authenticity_token },
+-  version: InertiaRails.always { Rails.application.config.version },
+-}
+-```
++Use Always for small values that must accompany partial responses. It does not bypass authorization or turn a global shared value into request-local state.
+ 
+ ## Scroll Props
+ 
+-Scroll-aware props for infinite scroll. Combines with `<InfiniteScroll>` on the
+-client to automatically load more data as the user scrolls down.
++Gonertia does not include a paginator. Query a bounded page and supply explicit metadata. Its metadata contract uses `any` because page cursors need not be integers:
+ 
+-**Check the project's pagy version** before writing pagination code — the API
+-changed significantly in v42. Check `Gemfile.lock` for the installed version.
++```go
++type PageMetadata struct { Current int; Previous, Next any }
++func (p PageMetadata) GetPageName() string { return "page" }
++func (p PageMetadata) GetPreviousPage() any { return p.Previous }
++func (p PageMetadata) GetNextPage() any { return p.Next }
++func (p PageMetadata) GetCurrentPage() any { return p.Current }
+ 
+-```ruby
+-# Pagy v42+ syntax
+-class PostsController < ApplicationController
+-  include Pagy::Method
+-
+-  def index
+-    pagy, posts = pagy(:offset, Post.order(created_at: :desc), limit: 20)
+-    # For cursor-based: pagy, posts = pagy(:keyset, Post.order(:id), limit: 20)
+-
+-    render inertia: {
+-      posts: InertiaRails.scroll(pagy) { posts.as_json(only: [:id, :title, :body]) },
+-    }
+-  end
+-end
+-
+-# Pagy pre-v42 syntax (if project uses older version)
+-class PostsController < ApplicationController
+-  include Pagy::Backend
+-
+-  def index
+-    pagy, posts = pagy(Post.order(created_at: :desc), limit: 20)
+-
+-    render inertia: {
+-      posts: InertiaRails.scroll(pagy) { posts.as_json(only: [:id, :title, :body]) },
+-    }
+-  end
+-end
++prop := inertia.Scroll(posts, inertia.WithMetadata(metadata)).ConfigureMergeIntent(r)
+ ```
+ 
+-React side with `<InfiniteScroll>`:
++The default wrapper is `data`, so the React contract is `{ posts: { data: Post[] } }`. `Previous`/`Next` are nil at the boundary. Validate page/cursor inputs, stable ordering and tenant scope independently. Do not port Pagy methods.
++
+ ```tsx
+-import { InfiniteScroll } from '@inertiajs/react'
+-
+-export default function Index({ posts }: Props) {
+-  return (
+-    <InfiniteScroll data="posts" loading={() => <PostsSkeleton />}>
+-      {posts.map(post => <PostCard key={post.id} post={post} />)}
+-    </InfiniteScroll>
+-  )
+-}
+-
+-// Manual mode — "Load more" button instead of auto-scroll
+-export function IndexManual({ posts }: Props) {
+-  return (
+-    <InfiniteScroll
+-      data="posts"
+-      manual
+-      next={({ loading, fetch, hasMore }) =>
+-        hasMore && (
+-          <button onClick={fetch} disabled={loading}>
+-            {loading ? 'Loading...' : 'Load more'}
+-          </button>
+-        )
+-      }
+-    >
+-      {posts.map(post => <PostCard key={post.id} post={post} />)}
+-    </InfiniteScroll>
+-  )
+-}
++<InfiniteScroll data="posts" loading={() => <PostsSkeleton />}>
++  {posts.data.map(post => <PostCard key={post.id} post={post} />)}
++</InfiniteScroll>
+ ```
+ 
+-**NEVER use `<WhenVisible>` for infinite scroll** — use `<InfiniteScroll>` which
+-handles page tracking, URL sync, and merge behavior automatically.
++Use the installed client API for manual load-more controls. Test bidirectional merge intent and filter resets before claiming infinite scrolling works.
+ 
+ ## Resetting Merge/Scroll Props
+ 
+-Merge and scroll props accumulate data across partial reloads. To discard the
+-accumulated state and start fresh **without a full page visit**, pass `reset`
+-on the client:
+-
+ ```tsx
+-// Fetch messages from scratch — clears the accumulated array first
+ router.reload({ only: ['messages'], reset: ['messages'] })
+ ```
+ 
+-**Use when user changes filters / sort order: `reset` the prop so stale items are discarded.**
++Reset accumulated data when filters/sort change. A fresh full visit also replaces prior data.
+ 
+ ## Combining Prop Types
+ 
+-Prop helpers accept keyword arguments that layer behaviours together:
+-
+-```ruby
+-render inertia: {
+-  # Deferred + merge — loads after initial render, then accumulates on subsequent reloads
+-  notifications: InertiaRails.defer(merge: true) {
+-    current_user.notifications.recent.as_json
+-  },
+-
+-  # Deferred + merge in a group — multiple props fetched together, both accumulate
+-  posts: InertiaRails.defer(group: 'feed', merge: true) {
+-    @posts.as_json(only: [:id, :title, :body])
+-  },
+-  comments: InertiaRails.defer(group: 'feed', merge: true) {
+-    @comments.as_json(only: [:id, :post_id, :body])
+-  },
+-
+-  # Optional + merge — only fetched on demand, appends to existing data
+-  activity_log: InertiaRails.optional(merge: true) {
+-    @activities.as_json
+-  },
+-}
+-```
+-
+-The `merge: true` flag works on `defer`, `optional`, and `always`. It tells
+-Inertia to append results to the existing client-side array on partial reloads
+-instead of replacing it — the same behaviour as `InertiaRails.merge`, but
+-combined with another prop type.
++Gonertia v3.0.0 supports `inertia.Defer(loader, "feed").Merge()` and methods on `MergeProps`. Do not assume Rails keyword combinations such as optional+merge or arbitrary expiry exist. Check `response.go` in the pinned module and add response tests for every combination used by a feature.

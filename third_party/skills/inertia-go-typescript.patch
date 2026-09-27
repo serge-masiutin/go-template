@@ -1,0 +1,216 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,18 +1,30 @@
+ ---
+-name: inertia-rails-typescript
++name: inertia-go-typescript
+ description: >-
+-  TypeScript type safety for Inertia Rails (React, Vue, Svelte): shared props, flash, and errors via InertiaConfig
++  TypeScript type safety for Inertia Go (React, Vue, Svelte): shared props, flash, and errors via InertiaConfig
+   module augmentation in globals.d.ts. Use when setting up TypeScript types, configuring shared props typing, fixing
+   TS2344 or TS2339 errors in Inertia components, or adding new shared data.
+ ---
+ 
+-# Inertia Rails TypeScript Setup
++## Go project contract
++
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
++
++
++# Inertia Go TypeScript Setup
+ 
+ Type-safe shared props, flash, and errors using InertiaConfig module augmentation.
+-Works identically across React, Vue, and Svelte — the `globals.d.ts` and `InertiaConfig` setup is the same for all frameworks.
++The starter uses React. Its included TypeScript module augments InertiaConfig once.
+ 
+ **Before adding TypeScript types, ask:**
+-- **Shared props (auth, flash)?** → Update `SharedProps`/`FlashData` in `index.ts` — InertiaConfig in `globals.d.ts` propagates them globally via `usePage()`
++- **Shared props (auth, flash)?** → Update `SharedProps` (and define `FlashData` if the feature needs flash) in `web/src/types.ts` — InertiaConfig in the included augmentation module propagates them globally via `usePage()`
+ - **Page-specific props?** → `type Props = { ... }` in the page file only — never include shared props here
+ 
+ ## InertiaConfig Module Augmentation
+@@ -25,36 +37,16 @@
+ - `errorValueType` (NOT errorBag, NOT errorType)
+ 
+ ```typescript
+-// app/frontend/types/globals.d.ts
+-import type { FlashData, SharedProps } from '@/types'
+-
++// web/src/types.ts — a module included by tsconfig.json
++export type SharedProps = { csrfToken: string };
+ declare module '@inertiajs/core' {
+-  export interface InertiaConfig {
+-    sharedPageProps: SharedProps   // EXACT name — auto-typed for usePage().props
+-    flashDataType: FlashData      // EXACT name — auto-typed for usePage().flash
+-    errorValueType: string[]      // EXACT name — errors are arrays of strings
++  interface InertiaConfig {
++    sharedPageProps: SharedProps;
+   }
+ }
+ ```
+ 
+-```typescript
+-// app/frontend/types/index.ts
+-export interface FlashData {
+-  notice?: string
+-  alert?: string
+-}
+-
+-export interface SharedProps {
+-  auth: { user?: { id: number; name: string; email: string } }
+-}
+-```
+-
+-**Convention:** Use `auth: { user: ... }` as the shared props key — this matches the
+-Rails `inertia_share` community convention (`{ auth: { user: current_user } }`).
+-The `auth` namespace separates authentication data from page props, preventing
+-collisions when a page has its own `user` prop. Do NOT use `current_user:` or
+-`user:` as top-level keys — they collide with page-specific props and break the
+-convention that other Inertia skills and examples assume.
++If adding flash, augment `flashDataType` to the exact payload. If changing error values, augment `errorValueType` to that actual server contract; the starter uses strings. Do not declare auth or flash fields that the server does not provide.
+ 
+ ## BAD vs GOOD Patterns
+ 
+@@ -68,45 +60,41 @@
+ // BAD — declaring PageProps interface:
+ // interface PageProps { auth: AuthData; flash: FlashData }
+ 
+-// BAD — using current_user or user as top-level shared key:
+-// interface SharedProps { current_user: User }
+-
+ // BAD — destructuring auth directly from usePage() (TS2339: 'auth' does not exist on Page):
+ // const { auth } = usePage()
+ // usePage() returns a Page object with { props, flash, component, url, ... }
+ // auth lives inside props, not on the Page itself
+ 
+-// BAD — duplicating InertiaConfig in index.ts (it belongs in globals.d.ts):
+-// declare module '@inertiajs/core' { ... }  ← in index.ts
++// BAD — declaring conflicting InertiaConfig property types in several modules
+ 
+ // GOOD — props from usePage().props, flash from usePage().flash:
+ const { props, flash } = usePage()
+-// props.auth is typed (from SharedProps via InertiaConfig)
+-// flash.notice is typed (from FlashData via InertiaConfig)
++// props.csrfToken is typed through InertiaConfig
++// Add an exact flashDataType declaration before using application flash keys.
+ ```
+ 
+-**Important:** `globals.d.ts` configures InertiaConfig ONCE. When adding a new shared
+-prop, only update `index.ts` — do NOT touch `globals.d.ts`:
++**Important:** the included augmentation module configures InertiaConfig ONCE. When adding a new shared
++prop, update its canonical SharedProps declaration in `web/src/types.ts`:
+ 
+ ```typescript
+-// BEFORE — app/frontend/types/index.ts
+-export interface SharedProps {
+-  auth: { user?: { id: number; name: string; email: string } }
++// BEFORE — web/src/types.ts
++export type SharedProps = {
++  csrfToken: string
+ }
+ 
+ // AFTER — add the new key here, NOT in globals.d.ts
+-export interface SharedProps {
+-  auth: { user?: { id: number; name: string; email: string } }
++export type SharedProps = {
++  csrfToken: string
+   notifications: { unread_count: number }
+ }
+ ```
+ 
+-InertiaConfig in `globals.d.ts` references `SharedProps` by name — it picks up the
+-change automatically. Adding a second `declare module '@inertiajs/core'` causes conflicts.
++InertiaConfig in the included augmentation module references `SharedProps` by name — it picks up the
++change automatically. Keep one canonical declaration. Compatible TypeScript declaration merging is legal, but conflicting property types are not.
+ 
+ ## Page-Specific Props
+ 
+-Page components type ONLY their own props. Shared props (like auth) and flash come from
++Page components type ONLY their own props. Shared props (like csrfToken) and flash come from
+ InertiaConfig automatically.
+ 
+ ### `type` vs `interface` for page props (React-specific)
+@@ -128,42 +116,21 @@
+ // React
+ type Props = {
+   users: User[]         // page-specific only
+-  // auth is NOT here — it comes from InertiaConfig globally
++  // Shared csrfToken comes from InertiaConfig globally
+ }
+ 
+ export default function Index({ users }: Props) {
+   // Access shared props separately:
+   const { props, flash } = usePage()
+-  // props.auth is typed via InertiaConfig
+-  // flash.notice is typed via InertiaConfig
++  // props.csrfToken is typed via InertiaConfig
++  // Flash keys require their own exact flashDataType declaration.
+   return <UserList users={users} />
+ }
+ ```
+ 
+ ### Accessing shared props in Vue and Svelte
+ 
+-Vue and Svelte use different patterns to access shared props, but InertiaConfig
+-typing works the same way.
+-
+-```vue
+-<!-- Vue 3 — usePage() returns reactive object; use computed() for derived values -->
+-<script setup lang="ts">
+-import { usePage } from '@inertiajs/vue3'
+-import { computed } from 'vue'
+-
+-const page = usePage()
+-const userName = computed(() => page.props.auth.user?.name) // typed via InertiaConfig
+-</script>
+-```
+-
+-```svelte
+-<!-- Svelte — page store from @inertiajs/svelte -->
+-<script lang="ts">
+-  import { page } from '@inertiajs/svelte'
+-  // $page.props.auth is typed via InertiaConfig
+-  // $page.flash.notice is typed via InertiaConfig
+-</script>
+-```
++The template is React-only. The original upstream skill supports other adapters, but those packages and build pipelines are not installed here. Do not mix framework examples into this starter.
+ 
+ ## Common TypeScript Errors
+ 
+@@ -172,20 +139,16 @@
+ | **TS2344** on `usePage<Props>()` | `interface` lacks index signature | Use `type Props = { ... }` instead of `interface`, or wrap: `usePage<Required<Props>>()` |
+ | **TS2339** `'auth' does not exist on type Page` | Destructuring `auth` from `usePage()` directly | `usePage()` returns `{ props, flash, ... }` — use `usePage().props.auth`, not `usePage().auth` |
+ | **TS2339** `'flash' does not exist on type` | Accessing `usePage().props.flash` | Flash is top-level: `usePage().flash`, NOT `usePage().props.flash` |
+-| Shared props untyped | Missing InertiaConfig | Add `globals.d.ts` with module augmentation (see above) |
+-| InertiaConfig not taking effect | Declaration in wrong file | Must be in a `.d.ts` file (e.g., `globals.d.ts`), not in `.ts` — TypeScript ignores `declare module` in regular `.ts` files that have imports/exports |
+-| Types correct but IDE shows errors | `globals.d.ts` not included | Verify `tsconfig.app.json` includes the types directory in `include` array |
++| Shared props untyped | Missing InertiaConfig | Add the included augmentation module with module augmentation (see above) |
++| InertiaConfig not taking effect | Augmentation module not included | Include the module in tsconfig; augmentation works in an imported `.ts` module or a `.d.ts` file |
++| Types correct but IDE shows errors | the included augmentation module not included | Verify `tsconfig.json` includes the types directory in `include` array |
+ 
+-## Typelizer Integration
++## Go Contract Synchronization
+ 
+-If using the `typelizer` gem (see `alba-inertia` skill), SharedProps are auto-generated
+-from your serializer — do NOT manually write the `SharedProps` interface in `index.ts`.
+-You only write `globals.d.ts` once (the InertiaConfig augmentation). When you add a new
+-attribute to `SharedPropsResource`, Typelizer regenerates `index.ts` and the types
+-propagate via InertiaConfig — no manual type updates needed.
++The Go starter uses explicit response DTOs and TypeScript declarations. There is no Typelizer or implicit generator. Update both contracts atomically and test JSON keys, decimal-string IDs, nullability and arrays. If adopting generation later, commit the generator/configuration and fail CI on drift.
+ 
+ ## Related Skills
+-- **Shared props setup** → `inertia-rails-controllers` (inertia_share)
+-- **Flash config** → `inertia-rails-controllers` (flash_keys)
+-- **Auto-generated types** → `alba-inertia` (Typelizer + Alba resources)
+-- **Page component props** → `inertia-rails-pages` (type Props pattern)
++- **Shared props setup** → `inertia-go-controllers` (request-context SetProps)
++- **Flash config** → `inertia-go-controllers` (session flash provider)
++- **JSON contracts** → `go-serialization` (explicit DTO mapping)
++- **Page component props** → `inertia-go-pages` (type Props pattern)

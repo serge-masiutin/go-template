@@ -1,0 +1,364 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,18 +1,30 @@
+ ---
+ name: shadcn-inertia
+ description: >-
+-  shadcn/ui component integration for Inertia Rails React (NOT Next.js): forms, dialogs, tables, toasts, dark mode,
++  shadcn/ui component integration for Inertia Go React (NOT Next.js): forms, dialogs, tables, toasts, dark mode,
+   command palette, and more. Use when building UI with shadcn/ui components in an Inertia app or adapting shadcn
+   examples from Next.js. NEVER react-hook-form/zod — wire shadcn inputs to Inertia Form via name attribute. Flash
+-  toasts require Rails flash_keys initializer config.
++  toasts require a session-backed Gonertia flash provider and matching TypeScript types.
+ ---
+ 
+-# shadcn/ui for Inertia Rails
++## Go project contract
+ 
+-shadcn/ui patterns adapted for Inertia.js + Rails + React. NOT Next.js.
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
++
++
++# shadcn/ui for Inertia Go
++
++shadcn/ui patterns adapted for Inertia.js + Go + React. NOT Next.js.
+ 
+ **Before using a shadcn example, ask:**
+-- **Does it use `react-hook-form` + `zod`?** → Replace with Inertia `<Form>` + `name` attributes. Inertia handles CSRF, errors, redirects, processing state — react-hook-form would fight all of this.
++- **Does it use `react-hook-form` + `zod`?** → Replace with Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>` + `name` attributes. Inertia handles errors, redirects and processing state; add the project CSRF header — react-hook-form would fight all of this.
+ - **Does it use `'use client'`?** → Remove it. Inertia has no RSC — all components are client components.
+ - **Does it use `next/link`, `next/head`, `useRouter()`?** → Replace with Inertia `<Link>`, `<Head>`, `router`.
+ 
+@@ -21,7 +33,7 @@
+ | shadcn default (Next.js) | Inertia equivalent |
+ |---|---|
+ | `'use client'` directive | Remove — not needed (no RSC) |
+-| `react-hook-form` + `zod` | Inertia `<Form>` component |
++| `react-hook-form` + `zod` | Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>` component |
+ | `FormField`, `FormItem`, `FormMessage` | Plain `<Input name="...">` + `errors.field` |
+ | `next-themes` | CSS class strategy + `@custom-variant` |
+ | `useRouter()` (Next) | `router` from `@inertiajs/react` |
+@@ -30,18 +42,17 @@
+ 
+ **NEVER use shadcn's `FormField`, `FormItem`, `FormLabel`, `FormMessage` components** —
+ they depend on react-hook-form's `useFormContext` internally and will crash without it.
+-Use plain shadcn `Input`/`Label`/`Select` with `name` attributes inside Inertia `<Form>`,
++Use plain shadcn `Input`/`Label`/`Select` with `name` attributes inside Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>`,
+ and render errors from the render function's `errors` object (see examples below).
+ 
+ ## Setup
+ 
+-`npx shadcn@latest init`. add `@/` resolve aliases to `tsconfig.json` if not present,
+-**Do NOT add `@/` resolve aliases to `vite.config.ts`** — `vite-plugin-ruby` already provides them.
++The starter does not preinstall shadcn. When requested, inspect the current CLI and initialize it against the existing React/Vite/Tailwind stack. Keep `@/` aligned in both `vite.config.ts` and `tsconfig.json`. Pin generated dependencies.
+ 
+-## shadcn Inputs in Inertia `<Form>`
++## shadcn Inputs in Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>`
+ 
+-Use plain shadcn `Input`/`Label`/`Button` with `name` attributes inside Inertia `<Form>`.
+-See `inertia-rails-forms` skill for full `<Form>` API — this section covers shadcn-specific adaptation only.
++Use plain shadcn `Input`/`Label`/`Button` with `name` attributes inside Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>`.
++See `inertia-go-forms` skill for full `<Form headers={{ "X-CSRF-Token": csrfToken }}>` API — this section covers shadcn-specific adaptation only.
+ 
+ **The key pattern:** Replace shadcn's `FormField`/`FormItem`/`FormMessage` with plain
+ components + manual error display:
+@@ -53,7 +64,7 @@
+ {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+ ```
+ 
+-**`<Select>` requires `name` prop** for Inertia `<Form>` integration — shadcn examples
++**`<Select>` requires `name` prop** for Inertia `<Form headers={{ "X-CSRF-Token": csrfToken }}>` integration — shadcn examples
+ omit it because react-hook-form manages values differently:
+ 
+ ```tsx
+@@ -111,14 +122,14 @@
+ 
+ ## Toast with Flash Messages
+ 
+-Flash config (`flash_keys`) is in `inertia-rails-controllers`. Flash access
+-(`usePage().flash`) is in `inertia-rails-pages`. This section covers **toast UI wiring only**.
++Flash provider configuration is in `inertia-go-controllers`. Flash access
++(`usePage().flash`) is in `inertia-go-pages`. This section covers **toast UI wiring only**.
+ 
+ **MANDATORY — READ ENTIRE FILE** when implementing flash-based toasts with Sonner:
+ [`references/flash-toast.md`](references/flash-toast.md) (~80 lines) — full `useFlash`
+ hook and Sonner toast provider. **Do NOT load** if only reading flash values without toast UI.
+ 
+-Key gotcha: `flash_keys` in the Rails initializer MUST match your `FlashData`
++Key contract: the Go flash payload MUST match your `FlashData`
+ TypeScript type — do NOT use `success`/`error` unless you also update both.
+ 
+ ## Dark Mode (No next-themes)
+@@ -127,30 +138,21 @@
+ `@custom-variant dark (&:is(.dark *));` in your CSS (Tailwind v4). No extra
+ setup needed for the variables themselves.
+ 
+-**CRITICAL — prevent flash of wrong theme (FOUC):** Next.js handles this
+-automatically; Inertia does NOT. Add an inline script in `<head>` (before React
+-hydrates) and call `initializeTheme()` in your Inertia entrypoint:
++To avoid a flash of the wrong theme, run theme selection before loading styles and
++React. The starter's production CSP permits same-origin external scripts; it rejects
++unhashed inline scripts. A feature can add `web/public/theme.js` (copied by Vite to
++`web/build/theme.js`) and reference it in `internal/httpapp/root.html` before assets:
+ 
+-```erb
+-<%# app/views/layouts/application.html.erb — in <head>, before any stylesheets %>
+-<script>
+-  document.documentElement.classList.toggle(
+-    "dark",
+-    localStorage.appearance === "dark" ||
+-      (!("appearance" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches),
+-  );
+-</script>
++```html
++<script src="/build/theme.js"></script>
+ ```
+ 
+-```tsx
+-// app/frontend/entrypoints/inertia.tsx
+-import { initializeTheme } from '@/hooks/use-appearance'
+-initializeTheme() // must run before createInertiaApp
+-```
+-
+-Use a `useAppearance` hook (light/dark/system modes, localStorage persistence,
+-`matchMedia` listener) instead of `next-themes`. Toggle via `.dark` class on
+-`<html>` — no provider needed.
++Implement that script and the React appearance hook together. Both must use the same
++`light` / `dark` / `system` values, storage key, and system-media-query semantics.
++Use `.dark` on `<html>`; persist deliberate user choices, remove the media listener on
++cleanup, and treat blocked browser storage as an explicit optional-preference case.
++Test initial load and navigation under the production CSP. No theme hook is installed
++in the base starter. Do not copy an import for an unimplemented `use-appearance` hook.
+ 
+ ## Troubleshooting
+ 
+@@ -159,13 +161,13 @@
+ | `FormField`/`FormMessage` crash | Using shadcn form components that depend on react-hook-form | Replace with plain `Input`/`Label` + `errors.field` display |
+ | `Select` value not submitted | Missing `name` prop | Add `name="field"` to `<Select>` — shadcn examples omit it |
+ | Dialog closes unexpectedly | Missing or wrong `onOpenChange` handler | Use `onOpenChange={(open) => { if (!open) closeHandler() }}` |
+-| Flash of wrong theme (FOUC) | Missing inline `<script>` in `<head>` | Add dark mode script before stylesheets (see Dark Mode section) |
++| Flash of wrong theme (FOUC) | Theme selection runs after styles/React | Add the same-origin external theme script before assets and verify production CSP (see Dark Mode section) |
+ 
+ ## Related Skills
+-- **Form component** → `inertia-rails-forms` (`<Form>` render function, useForm)
+-- **Flash config** → `inertia-rails-controllers` (flash_keys initializer)
+-- **Flash access** → `inertia-rails-pages` (usePage().flash)
+-- **URL-driven dialogs** → `inertia-rails-pages` (router.get pattern)
++- **Form component** → `inertia-go-forms` (`<Form headers={{ "X-CSRF-Token": csrfToken }}>` render function, useForm)
++- **Flash config** → `inertia-go-controllers` (session flash provider)
++- **Flash access** → `inertia-go-pages` (usePage().flash)
++- **URL-driven dialogs** → `inertia-go-pages` (router.get pattern)
+ 
+ ## References
+ 
+@@ -175,3 +177,5 @@
+ 
+ **Do NOT load** `components.md` for basic Form, Select, Dialog, or Table usage —
+ the examples above are sufficient.
++
++Examples above use `const { csrfToken } = usePage().props` inside the component. Include that binding/import where a snippet is used; never hardcode a token.
+--- original/references/components.md
++++ adapted/references/components.md
+@@ -1,6 +1,6 @@
+ # shadcn/ui Components for Inertia — Extended Reference
+ 
+-Additional component patterns adapted for Inertia.js + Rails.
++Additional component patterns adapted for Inertia.js + Go.
+ 
+ ## Table of Contents
+ 
+@@ -25,9 +25,10 @@
+ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+   AlertDialogTrigger } from '@/components/ui/alert-dialog'
+-import { router } from '@inertiajs/react'
+-
+-function DeleteUserButton({ userId }: { userId: number }) {
++import { router, usePage } from '@inertiajs/react'
++
++function DeleteUserButton({ userId }: { userId: string }) {
++  const { csrfToken } = usePage().props
+   return (
+     <AlertDialog>
+       <AlertDialogTrigger asChild>
+@@ -40,7 +41,7 @@
+         </AlertDialogHeader>
+         <AlertDialogFooter>
+           <AlertDialogCancel>Cancel</AlertDialogCancel>
+-          <AlertDialogAction onClick={() => router.delete(`/users/${userId}`)}>
++          <AlertDialogAction onClick={() => router.delete(`/users/${userId}`, { headers: { "X-CSRF-Token": csrfToken } })}>
+             Delete
+           </AlertDialogAction>
+         </AlertDialogFooter>
+@@ -66,7 +67,7 @@
+         <SheetHeader>
+           <SheetTitle>Create User</SheetTitle>
+         </SheetHeader>
+-        <Form method="post" action="/users">
++        <Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users">
+           {({ errors, processing }) => (
+             <div className="space-y-4 mt-4">
+               <Input name="name" placeholder="Name" />
+@@ -87,9 +88,9 @@
+ 
+ ```tsx
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+-import { router } from '@inertiajs/react'
+-
+-function UserTabs({ activeTab, profile, activity }: Props) {
++import { router, usePage } from '@inertiajs/react'
++
++function UserTabs({ user, activeTab, profile, activity }: Props) {
+   return (
+     <Tabs
+       value={activeTab}
+@@ -113,9 +114,10 @@
+ ```tsx
+ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+   DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+-import { router } from '@inertiajs/react'
++import { router, usePage } from '@inertiajs/react'
+ 
+ function UserActions({ user }: { user: User }) {
++  const { csrfToken } = usePage().props
+   return (
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+@@ -128,7 +130,7 @@
+         <DropdownMenuItem
+           className="text-destructive"
+           onClick={() => {
+-            if (confirm('Delete?')) router.delete(`/users/${user.id}`)
++            if (confirm('Delete?')) router.delete(`/users/${user.id}`, { headers: { "X-CSRF-Token": csrfToken } })
+           }}
+         >
+           Delete
+@@ -145,11 +147,13 @@
+ 
+ ```tsx
+ import { Button } from '@/components/ui/button'
+-import { router } from '@inertiajs/react'
++import { router, usePage } from '@inertiajs/react'
+ 
+ function Pagination({ currentPage, totalPages }: Props) {
+   const goToPage = (page: number) => {
+-    router.get(window.location.pathname, { page }, { preserveState: true })
++    const url = new URL(window.location.href)
++    url.searchParams.set('page', String(page))
++    router.get(url.pathname + url.search, {}, { preserveState: true })
+   }
+ 
+   return (
+@@ -180,11 +184,16 @@
+ 
+ ```tsx
+ import { Input } from '@/components/ui/input'
+-import { router } from '@inertiajs/react'
+-import { useRef } from 'react'
++import { router, usePage } from '@inertiajs/react'
++import { useEffect, useRef } from 'react'
+ 
+ function SearchInput({ initialValue }: { initialValue: string }) {
+-  const timeout = useRef<ReturnType<typeof setTimeout>>()
++  const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
++  useEffect(() => {
++    const cancelPending = () => clearTimeout(timeout.current)
++    const removeListener = router.on('before', cancelPending)
++    return () => { cancelPending(); removeListener() }
++  }, [])
+ 
+   const handleSearch = (value: string) => {
+     clearTimeout(timeout.current)
+@@ -212,7 +221,8 @@
+ import { Checkbox } from '@/components/ui/checkbox'
+ import { Switch } from '@/components/ui/switch'
+ 
+-<Form method="post" action="/settings">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/settings"
++  transform={values => ({ notifications: values.notifications === "on", dark_mode: values.dark_mode === "on" })}>
+   {({ errors }) => (
+     <>
+       <div className="flex items-center gap-2">
+@@ -234,7 +244,7 @@
+ ```tsx
+ import { Textarea } from '@/components/ui/textarea'
+ 
+-<Form method="post" action="/posts">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/posts">
+   {({ errors }) => (
+     <>
+       <Textarea name="body" rows={6} placeholder="Write your post..." />
+@@ -304,3 +314,5 @@
+   )
+ }
+ ```
++
++Examples above use `const { csrfToken } = usePage().props` inside the component. Include that binding/import where a snippet is used; never hardcode a token.
+--- original/references/flash-toast.md
++++ adapted/references/flash-toast.md
+@@ -1,41 +1,24 @@
+ # Flash Toast with Sonner
+ 
+-Full-stack flash toast: Rails flash_keys config + useFlash hook + Sonner.
++Preserve the upstream React hook and persistent-layout integration. Sonner/shadcn are optional additions; the starter does not install a toast library or emit notice/alert messages by default.
+ 
+-Use `notice` for success and `alert` for error — these are the standard Rails flash keys
+-and match the default `FlashData` type. No need to add custom keys for success/error messaging.
++## Go Setup
+ 
+-## Rails Setup
++Implement the session-backed Gonertia FlashProvider and declare the exact `flashDataType` in TypeScript before using these keys.
+ 
+-Configure which flash keys are exposed to the client:
+-
+-```ruby
+-# config/initializers/inertia_rails.rb
+-InertiaRails.configure do |config|
+-  config.flash_keys = %i[notice alert]
+-end
++```go
++ctx := inertia.SetFlash(r.Context(), inertia.Flash{"notice": "Profile saved."})
++engine.Redirect(w, r.WithContext(ctx), "/profile", http.StatusSeeOther)
+ ```
+ 
+-Use `notice:` for success and `alert:` for errors — do NOT manually pass `inertia: { flash: ... }`:
+-
+-```ruby
+-def create
+-  @user = User.new(user_params)
+-  if @user.save
+-    redirect_to users_path, notice: "User created!"
+-  else
+-    redirect_back fallback_location: new_user_path, alert: "Failed to create user",
+-      inertia: { errors: @user.errors.to_hash }
+-  end
+-end
+-```
++Use SetValidationErrors for field validation, not a generic toast. Keep notice/alert a deliberate payload contract; no Rails initializer or automatic flash-key exposure exists.
+ 
+ ## useFlash Hook
+ 
+ **Important:** `toast` is imported from `'sonner'` (the package), NOT from `@/components/ui/sonner` (that only exports `Toaster`).
+ 
+ ```tsx
+-// app/frontend/hooks/use-flash.ts
++// web/src/hooks/use-flash.ts
+ import { router, usePage } from '@inertiajs/react'
+ import { useEffect, useRef } from 'react'
+ import { toast } from 'sonner' // NOT from '@/components/ui/sonner'
+@@ -71,7 +54,7 @@
+ Use in persistent layout (runs once, covers all pages):
+ 
+ ```tsx
+-// app/frontend/layouts/persistent-layout.tsx
++// web/src/layouts/persistent-layout.tsx
+ import { Toaster } from 'sonner'
+ import { useFlash } from '@/hooks/use-flash'
+ 

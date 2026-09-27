@@ -1,0 +1,262 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,120 +1,67 @@
+ ---
+-name: inertia-rails-setup
+-description: >-
+-  One-time project initializer for Inertia Rails skills. Detects stack and frontend framework
+-  (React/Vue/Svelte) from Gemfile and package.json, offers to install recommended deps
+-  (alba-inertia, js-routes, pagy, shadcn), and generates a CLAUDE.md section that configures
+-  which skill patterns apply. Use when first installing these skills, bootstrapping a new
+-  Inertia Rails project, or when the stack changes.
++name: inertia-go-setup
++description: Detect and align the Go, Gonertia, React, Vite, PostgreSQL and Storybook stack when bootstrapping or changing this starter. Preserve existing configuration and add dependencies only for a concrete missing capability.
+ ---
+ 
+-# Inertia Rails Project Setup
++## Go project contract
+ 
+-Detect stack, offer recommended deps, generate CLAUDE.md configuration.
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
+ 
+-**Run once per project.** Re-run when the stack changes.
+ 
+-**NEVER:**
+-- Run setup without `inertia_rails` gem in Gemfile — all skills assume it exists. If missing, tell the user to install it first.
+-- Overwrite existing `## Inertia Rails Stack` in CLAUDE.md without reading it — the user may have manual customizations. Replace only the auto-generated block.
+-- Add `@/` resolve aliases to `vite.config.ts` — `vite-plugin-ruby` already provides them. Only add to `tsconfig.json`.
+-- Recommend `alba-inertia` if the project uses `jbuilder` AND the user hasn't expressed interest in switching — suggest it, but don't push. You CAN still suggest it if the project has `blueprinter` (alba is a direct upgrade path).
+-- Generate CLAUDE.md blocks for skills the user doesn't have installed — saying "alba-inertia skill does NOT apply" is correct; saying "use alba-inertia" when the gem is absent is wrong.
++# Inertia Go Project Setup
++
++Preserve the original detect → choose missing capability → configure → document → verify workflow. Read manifests and existing configuration before changing anything.
+ 
+ ## Step 1: Detect Current Stack
+ 
+-Read `Gemfile` (NOT `Gemfile.lock`) and `package.json` and check for:
++Read `go.mod`, `go.sum`, `package.json`, `package-lock.json`, `mise.toml`, Vite/TypeScript configs, routes, session middleware and CI.
+ 
+-| Look for | Means |
+-|----------|-------|
+-| `inertia_rails` gem | Inertia Rails installed (required) |
+-| `@inertiajs/react` in package.json | React frontend |
+-| `@inertiajs/vue3` in package.json | Vue 3 frontend |
+-| `@inertiajs/svelte` in package.json | Svelte frontend |
+-| `alba-inertia` gem | Convention-based rendering active |
+-| `alba` + `typelizer` gems (no `alba-inertia`) | Alba serialization without convention rendering |
+-| `pagy` gem | Pagy pagination |
+-| `kaminari` gem | Kaminari pagination |
+-| `rspec-rails` gem | RSpec testing |
+-| `js-routes` gem | Typed frontend path helpers |
+-| `devise` gem | Devise authentication |
+-| `pundit` gem | Pundit authorization |
+-| `action_policy` gem | Action Policy authorization |
+-| `components.json` in root exists | shadcn installed (React: shadcn/ui, Vue: shadcn-vue, Svelte: shadcn-svelte) |
++| Evidence | Meaning |
++| --- | --- |
++| `romsar/gonertia/v3` | Server adapter; inspect pinned API |
++| `@inertiajs/react` | React client adapter |
++| pgx + SQL migrations | PostgreSQL persistence |
++| SCS + pgxstore | Server sessions and flash storage |
++| `web/src/types.ts` | Explicit frontend contract and InertiaConfig augmentation |
++| Vite + Tailwind plugins | Frontend build and semantic CSS tokens |
++| `.storybook` | Component preview configuration |
++| `components.json` | shadcn setup only if present; absent in the base starter |
+ 
+-## Step 2: Recommend Missing Deps
++## Step 2: Identify Missing Capabilities
+ 
+-Present detected stack, then offer deps that unlock skill features but aren't
+-installed yet. Use AskUserQuestion with multiSelect for the recommendations.
++The starter already has the core runtime. Do not install a Rails serializer, route generator, ORM, queue or UI framework merely because an upstream skill mentioned one. Go DTO mapping and net/http routing are explicit.
+ 
+-**Only recommend what's missing.** Skip anything already detected in Step 1.
++For a requested capability, compare the standard library/current dependencies with a specific addition. Explain the tradeoff when it affects the user's architecture; do not add optional dependencies without a task-related reason.
+ 
+-| Dep | Type | Install command | What it unlocks |
+-|-----|------|-----------------|-----------------|
+-| `alba` + `typelizer` + `alba-inertia` | gems | `bundle add alba typelizer alba-inertia` | Convention-based rendering, auto-generated TypeScript types from Ruby. Eliminates `render inertia: { ... }` boilerplate and manual TS interfaces. Unlocks `alba-inertia` skill. |
+-| `js-routes` | gem | `bundle add js-routes` | Typed path helpers (`usersPath()`, `userPath(id)`) in React — no more hardcoded URL strings. |
+-| `pagy` | gem | `bundle add pagy` | Lightweight pagination with Inertia-friendly metadata. |
+-| shadcn/ui (React) | npx | `npx shadcn@latest init` | Pre-built React components adapted for Inertia. Unlocks `shadcn-inertia` skill. |
+-| shadcn-vue (Vue) | npx | `npx shadcn-vue@latest init` | Pre-built Vue components adapted for Inertia. Unlocks `shadcn-vue-inertia` skill. |
+-| shadcn-svelte (Svelte) | npx | `npx shadcn-svelte@latest init` | Pre-built Svelte components (bits-ui) adapted for Inertia. Unlocks `shadcn-svelte-inertia` skill. |
++## Step 3: Configure the Selected Capability
+ 
+-**Do NOT recommend** gems the user clearly chose alternatives for (e.g., don't suggest Pagy if Kaminari is present, you can still suggest alba if the project has `jbuilder` or `blueprinter`).
++Pin dependencies and update lockfiles. Vite and TypeScript each need the same `@/` alias; there is no vite-plugin-ruby supplying it. shadcn, if requested, must use the existing React/Vite/Tailwind configuration and semantic tokens.
+ 
+-## Step 3: Install Opted-In Deps
++Wire middleware explicitly: sessions, CSRF, Gonertia and routes. Use context-local props for per-request values. Validate production config and assets before serving. Do not invent generated routes/types or claim uploads are supported before implementing the backend contract.
+ 
+-Post-install scaffolding per dep:
++## Step 4: Update Agent Instructions
+ 
+-1. **alba-inertia** — also scaffold `ApplicationResource`:
+-   ```ruby
+-   # app/resources/application_resource.rb
+-   class ApplicationResource
+-     include Alba::Resource
+-     helper Typelizer::DSL
+-     helper Alba::Inertia::Resource
+-     include Rails.application.routes.url_helpers
+-   end
+-   ```
+-   And add Typelizer initializer:
+-   ```ruby
+-   # config/initializers/typelizer.rb
+-   Typelizer.configure do |config|
+-     config.output_dir = Rails.root.join("app/frontend/types/generated")
+-   end
+-   ```
+-2. **js-routes** — run `rails generate js_routes` if the generator exists
+-3. **shadcn** — framework-specific init:
+-   - React: `npx shadcn@latest init`
+-   - Vue: `npx shadcn-vue@latest init`
+-   - Svelte: `npx shadcn-svelte@latest init`
+-   After init, add `@/` resolve aliases to `tsconfig.json` if not present
+-
+-## Step 4: Generate CLAUDE.md
+-
+-Find or create `CLAUDE.md` in the project root. If `## Inertia Rails Stack`
+-exists, replace it (up to next `##` or EOF). Otherwise, append.
+-
+-**MANDATORY — READ ENTIRE FILE** before assembling the CLAUDE.md block:
+-[`references/claude-md-templates.md`](references/claude-md-templates.md) (~90 lines) — all
+-template blocks for each stack variant (serialization, UI, pagination, testing, routing,
+-authorization). Pick one block per category based on the detected stack.
+-
+-**Do NOT load** the templates file until Step 4 — Steps 1-3 determine which blocks to use.
++Read existing AGENTS.md and linked docs. Update the relevant block without deleting manual rules or adding conflicting duplicates. Use [the stack template](references/claude-md-templates.md) as a content guide; the file name preserves upstream provenance and does not require Claude-specific tooling.
+ 
+ ## Troubleshooting
+ 
+-| Symptom | Cause | Fix |
+-|---------|-------|-----|
+-| `npx shadcn@latest init` fails with "No framework detected" | Missing or misconfigured `vite.config.ts` | Ensure `vite-plugin-ruby` is configured and `tailwindcss` is in `package.json` before running init |
+-| Typelizer generates types in wrong directory | Missing or wrong `output_dir` in initializer | Add `config/initializers/typelizer.rb` with `config.output_dir = Rails.root.join("app/frontend/types/generated")` |
+-| `@/` imports not resolving | Aliases added to `vite.config.ts` instead of `tsconfig.json` | `vite-plugin-ruby` handles Vite aliases — only `tsconfig.json` needs `@/` paths for TypeScript |
+-| CLAUDE.md has conflicting instructions | Multiple `## Inertia Rails Stack` sections | Delete duplicates — only one auto-generated block should exist |
+-| Skills reference `alba-inertia` but it's not installed | Setup wasn't run, or alba wasn't selected | Re-run setup; CLAUDE.md should say "alba-inertia skill does NOT apply" if gem is absent |
+-| `js_routes:generate` fails | `js-routes` gem installed but generator not yet run | Run `rails generate js_routes` first to create the config file, then `rails js_routes:generate` |
++| Symptom | Check |
++| --- | --- |
++| `@/` import fails | Both Vite alias and TypeScript paths/include |
++| Blank first page | Root template entrypoint, manifest, page resolver and browser console |
++| Inertia 409 after deployment | Asset version mismatch; browser must perform full visit |
++| Form 403 | Session cookie and explicit X-CSRF-Token header |
++| Errors disappear on redirect | Flash provider/session middleware ordering |
++| Shared data crosses users | Global ShareProp used for request-specific values |
++| Production requests Vite localhost | Development hot file must be ignored in production |
+ 
+-## Step 5: Summary
++## Step 5: Verify and Report
+ 
+-Tell the user:
+-1. What was installed
+-2. Which skills are relevant to their stack (and which to ignore)
+-3. Review `## Inertia Rails Stack` in CLAUDE.md — it takes precedence over
+-   generic examples in individual skills
++Run the documented setup/build/tests for the changed boundary. State installed changes, applicable skills and unverified deployment assumptions. Do not report a planned command as executed.
+--- original/references/claude-md-templates.md
++++ adapted/references/claude-md-templates.md
+@@ -1,79 +1,19 @@
+-# CLAUDE.md Template Blocks
++# Agent Instruction Stack Template
+ 
+-Assemble these blocks based on the **final** stack (detected + installed).
+-
+-## Header (always)
++Adapt this content to the existing instruction file; retain local rules and document only installed, verified capabilities.
+ 
+ ```markdown
+-## Inertia Rails Stack
++## Go + Inertia Stack
+ 
+-- **Frontend**: [React/Vue 3/Svelte] with @inertiajs/[react|vue3|svelte] [version]
++- Read go.mod and package-lock.json before using version-specific APIs.
++- Server: net/http, Gonertia v3, pgx, SCS; frontend: React, TypeScript, Vite, Tailwind.
++- Use inertia-go-architecture first for page features, then the focused controllers/forms/pages/testing skills.
++- Parse strict JSON input; authorize on the server; use explicit public DTOs.
++- Mutations include X-CSRF-Token from shared props. Validation uses session errors and 303 redirects.
++- Use request-context SetProp/SetProps for shared values; never mutate global user props.
++- Keep frontend types synchronized with Go response contracts; no automatic generator is installed.
++- Use restored sb-* skills for Storybook and tailwind-best-practices for tokens.
++- Follow docs/development.md and docs/testing.md for verified commands.
+ ```
+ 
+-## Serialization (pick ONE)
+-
+-**alba-inertia:**
+-```markdown
+-- **Serialization**: alba-inertia convention-based rendering. Set instance variables — `Alba::Inertia::Controller` auto-detects resources. Do NOT use `render inertia: { ... }` directly. This overrides render patterns from other Inertia skills.
+-- **Shared props**: `SharedPropsResource` via `inertia_share { SharedPropsResource.new(self).to_inertia }`, NOT raw `inertia_share` with `as_json`.
+-- **Types**: Typelizer auto-generates TypeScript from Alba resources. Do NOT manually edit generated files.
+-```
+-
+-**alba + typelizer (no alba-inertia):**
+-```markdown
+-- **Serialization**: Alba resources with Typelizer. Use `render inertia: { key: ResourceClass.new(data) }`.
+-- **Types**: Typelizer auto-generates TypeScript from Alba resources. Do NOT manually edit generated files.
+-```
+-
+-**Neither:**
+-```markdown
+-- **Serialization**: `render inertia: { key: value }` with `as_json`. The `alba-inertia` skill does NOT apply — ignore it.
+-```
+-
+-## UI (pick ONE per framework)
+-
+-**React + shadcn/ui:**
+-```markdown
+-- **UI**: shadcn/ui adapted for Inertia. NEVER react-hook-form, zod, FormField, FormItem, or FormMessage — use Inertia `<Form>` with plain shadcn inputs.
+-```
+-
+-**Vue + shadcn-vue:**
+-```markdown
+-- **UI**: shadcn-vue adapted for Inertia. Use Inertia `<Form>` with plain shadcn-vue inputs via `#default` scoped slot.
+-```
+-
+-**Svelte + shadcn-svelte:**
+-```markdown
+-- **UI**: shadcn-svelte (bits-ui) adapted for Inertia. Use Inertia `<Form>` with plain shadcn-svelte inputs via `{#snippet}` syntax.
+-```
+-
+-**Not present:**
+-```markdown
+-- **UI**: Custom components. The shadcn skills do NOT apply — ignore them.
+-```
+-
+-## Pagination (if applicable)
+-
+-**Pagy:** `- **Pagination**: Pagy. Use pagy helper in controllers, pass pagy_metadata as prop.`
+-
+-**Kaminari:** `- **Pagination**: Kaminari. Use .page(params[:page]).per(25) in controllers.`
+-
+-## Testing (pick ONE)
+-
+-**RSpec:** `- **Testing**: RSpec with inertia_rails/rspec matchers. Use render_component, have_props, have_flash — NOT direct property access.`
+-
+-**Minitest:** `- **Testing**: Minitest. Load references/minitest.md from inertia-rails-testing for assertions.`
+-
+-## Routing (if applicable)
+-
+-**js-routes:** `- **Routing**: js-routes for typed path helpers. Run rails js_routes:generate after changing routes.rb.`
+-
+-## Authorization (if applicable)
+-
+-`- **Authorization**: [GEM NAME]. Pass can hashes as props — see references/authorization.md in inertia-rails-controllers.`
+-
+-## Footer (always)
+-
+-```markdown
+-- **Architecture**: Server owns routing, data, and auth. [React/Vue/Svelte] renders only. See `inertia-rails-architecture` for the decision matrix.
+-```
++Optional capabilities such as uploads, shadcn, realtime, queues, mail and generated contracts belong here only after implementation. Do not add references to absent tools or dependency names copied from the Rails source.

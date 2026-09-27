@@ -1,0 +1,8 @@
+/.env
+/tmp/
+/node_modules/
+/web/build/
+/storybook-static/
+/playwright-report/
+/test-results/
+.DS_Store

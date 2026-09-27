@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Martian Mono";
+  src: url("/fonts/martian-mono-variable.woff2") format("woff2");
+  font-weight: 100 800;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Martian Mono", ui-monospace, monospace;
+  --color-surface: #fafaf8;
+  --color-panel: #ffffff;
+  --color-ink: #202923;
+  --color-muted: #66746b;
+  --color-border: #d9dfda;
+  --color-accent: #256248;
+  --color-accent-hover: #194a35;
+  --color-danger: #a32c32;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+button,
+input,
+textarea {
+  font: inherit;
+}

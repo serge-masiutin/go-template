@@ -1,0 +1,36 @@
+# Проверки
+
+## Основной набор
+
+```sh
+mise exec -- bin/ci
+```
+
+Включает форматирование Go, `go mod tidy -diff`, `go mod verify`, `go vet`, `go test -race`, TypeScript, Vite build, Vitest, Storybook build и проверку skills. PostgreSQL для этого набора не нужен. Исходники frontend форматируются Prettier; проверка входит в CI.
+
+## PostgreSQL и браузер
+
+Поднимите локальную БД через `bin/setup`, затем один раз создайте отдельную тестовую:
+
+```sh
+docker compose exec postgres createdb -U starter starter_test
+```
+
+Если она уже существует, используйте её. Тестовые команды откажутся работать с именем БД без суффикса `_test`. Каждый запуск создаёт собственную схему и удаляет её после завершения; development-схема не затрагивается.
+
+```sh
+export TEST_DATABASE_URL='postgres://starter:local-development-only@127.0.0.1:5437/starter_test?sslmode=disable'
+mise exec -- go test -race -tags=integration ./...
+mise exec -- npx playwright install chromium
+mise exec -- bin/test-browser
+```
+
+Предварительно выполните `bin/ci`, чтобы иметь актуальный manifest. `bin/test-browser` создаёт изолированную схему и синтетического администратора, запускает Playwright и удаляет схему. Порт 3100 должен быть свободен. В Linux для браузера могут потребоваться системные зависимости: `npx playwright install --with-deps chromium`.
+
+Integration tests проверяют миграции, вход, одноразовые ошибки форм, CSRF/его ротацию, межсайтовые запросы, строгий JSON, version mismatch, partial props, разделение заметок по владельцу, отзыв admin-права, logout и отсутствие мутаций при неподдерживаемой Precognition-валидации. Браузер проходит неудачный/успешный вход, валидацию заметки, создание, перезагрузку, удаление и выход; JS-ошибки приводят к падению.
+
+## Изменение контрактов
+
+Тестируйте публичное поведение и негативные сценарии. SQL/session/authorization проверяйте с настоящим PostgreSQL. Ошибки типов и браузерный сценарий дополняют Go-тесты, а не заменяют их. Для новой deferred-функции добавьте отказ загрузки, retry и повторную авторизацию; для файлов — фактический multipart payload и лимиты.
+
+GitHub Actions выполняет оба набора и собирает Docker image. В базовый набор не входят нагрузочные испытания, production smoke на вашем хостинге и проверки ещё не добавленных интеграций.

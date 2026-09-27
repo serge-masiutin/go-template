@@ -1,0 +1,1117 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,16 +1,27 @@
+ ---
+-name: inertia-rails-forms
++name: inertia-go-forms
+ description: >-
+-  Full-stack form handling for Inertia Rails: create, edit, delete, multi-step wizard, and file upload
+-  forms with validation errors and progress tracking. React examples inline; Vue and Svelte equivalents
+-  in references. Use when building any form, handling file uploads, multi-step forms, client-side validation,
+-  or wiring form submission to Rails controllers. NEVER react-hook-form. Use `<Form>` for simple forms,
++  Full-stack form handling for Inertia Go: create, edit, delete, multi-step wizard, and file upload
++  forms with validation errors and progress tracking. React examples and Go server contracts included. Use when building any form, handling file uploads, multi-step forms, client-side validation,
++  or wiring form submission to Go handlers. NEVER react-hook-form. Use `Form` for simple forms,
+   useForm for dynamic/programmatic control.
+ ---
+ 
+-# Inertia Rails Forms
+-
+-Full-stack form handling for Inertia.js + Rails.
++## Go project contract
++
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
++
++
++# Inertia Go Forms
++
++Full-stack form handling for Inertia.js + Go.
+ 
+ **Before building a form, ask:**
+ - **Simple create/edit?** → `<Form>` component (no state management needed)
+@@ -19,8 +30,7 @@
+   of form data — `<Form>` handles the submission; `useState` handles the UI.
+ - **Multi-step wizard, dynamic fields (add/remove inputs), or form data
+   shared with sibling components (e.g., live preview panel)?** → `useForm` hook
+-- **Tempted by react-hook-form?** → Don't. Inertia's `<Form>` already handles CSRF
+-  tokens, redirect following, error mapping from Rails, processing state, file upload
++- **Tempted by react-hook-form?** → Don't. Inertia's `<Form>` already handles redirect following, error mapping from Go, processing state, file upload
+   detection, and history state. react-hook-form would duplicate or fight all of this.
+ 
+ **When NOT to use `<Form>` or `useForm`:**
+@@ -28,11 +38,11 @@
+ - **Inline single-field edits without navigation** – `router.patch` directly, or `useForm` if you need error display on the field
+ 
+ **NEVER:**
+-- Use `react-hook-form`, `vee-validate`, or `sveltekit-superforms` — Inertia `<Form>` already handles CSRF, redirect following, error mapping, processing state, and file detection. These libraries fight Inertia's request lifecycle.
++- Use `react-hook-form`, `vee-validate`, or `sveltekit-superforms` — Inertia `<Form>` plus the project CSRF header handles redirect following, error mapping, processing state, and file detection. These libraries fight Inertia's request lifecycle.
+ - Pass `data={...}` to `<Form>` — it has no `data` prop. Data comes from input `name` attributes automatically. `data` is a `useForm` concept.
+ - Use `useForm` for simple create/edit — `<Form>` handles these without state management. Reserve `useForm` for multi-step wizards, dynamic add/remove fields, or form data shared with sibling components.
+-- Use controlled `value=` instead of `defaultValue` on inputs — controlled inputs bypass `<Form>`'s dirty tracking, making `isDirty` always `false`.
+-- Omit `value="1"` on checkboxes — without it, the browser submits `"on"` and Rails won't cast to boolean correctly.
++- Add controlled state to ordinary inputs without a UI need. Prefer `defaultValue` for a simple `<Form>`; controlled inputs are supported, but keep their state and form reset behavior consistent.
++- Assume checkbox strings become Go booleans. Use `transform` to send a real boolean, including `false` for an unchecked field, or explicitly parse a documented form encoding.
+ - Call `useForm` inside a loop or conditional — it's a hook (React rules apply). Create one form instance per logical form.
+ 
+ ## `<Form>` Component (Preferred)
+@@ -51,7 +61,7 @@
+ 
+ export default function CreateUser() {
+   return (
+-    <Form method="post" action="/users">
++    <Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users">
+       {({ errors, processing }) => (
+         <>
+           <input type="text" name="name" />
+@@ -70,7 +80,7 @@
+ }
+ 
+ // Plain children — valid but no access to errors/processing/progress:
+-// <Form method="post" action="/users">
++// <Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users">
+ //   <input name="name" />
+ //   <button type="submit">Create</button>
+ // </Form>
+@@ -79,7 +89,7 @@
+ ### Delete Form
+ 
+ ```tsx
+-<Form method="delete" action={`/posts/${post.id}`}>
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="delete" action={`/posts/${post.id}`}>
+   {({ processing }) => (
+     <button type="submit" disabled={processing}>
+       {processing ? 'Deleting...' : 'Delete Post'}
+@@ -102,7 +112,7 @@
+ | `reset` | `(...fields) => void` | Reset specific fields or all fields |
+ | `clearErrors` | `(...fields) => void` | Clear specific errors or all errors |
+ 
+-Additional `<Form>` props (`errorBag`, `only`, `resetOnSuccess`,
++Additional `<Form>` props (`options={{ only: ["users"] }}`, `resetOnSuccess`,
+ event callbacks like `onBefore`, `onSuccess`, `onError`, `onProgress`) are
+ documented in `references/advanced-forms.md` — see loading trigger below.
+ 
+@@ -113,11 +123,10 @@
+ - Checkbox/radio → `defaultChecked`
+ - Select → `defaultValue` on `<select>`
+ 
+-> Checkbox without explicit `value` submits `"on"` — set `value="1"` so Rails
+-> casts to boolean correctly.
+-
+-```tsx
+-<Form method="patch" action={`/posts/${post.id}`}>
++> Checkbox values are strings. Transform them to a boolean before submitting to a Go `bool` field; unchecked inputs must deliberately produce `false`.
++
++```tsx
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="patch" action={`/posts/${post.id}`} transform={values => ({ ...values, published: values.published === "1" })}>
+   {({ errors, processing }) => (
+     <>
+       <input type="text" name="title" defaultValue={post.title} />
+@@ -148,7 +157,12 @@
+ The ref exposes the same methods and state as render function props (`FormComponentSlotProps`).
+ Use when you need to interact with the form from outside `<Form>`.
+ Key ref methods: `submit()`, `reset()`, `clearErrors()`, `setError()`,
+-`getData()`, `getFormData()`, `validate()`, `touch()`, `defaults()`.
++`getData()`, `getFormData()`, `defaults()`.
++Do not call `validate()` or enable Precognition in this starter. React's remote validation
++can send the actual mutation method/action; without a validation-only server protocol
++that risks executing a write. The starter rejects `Precognition` requests with 400.
++Local `setError` checks remain available. Add remote validation only with an explicit
++non-mutating handler contract and tests proving that validation cannot persist changes.
+ State: `errors`, `processing`, `progress`, `isDirty`, `hasErrors`,
+ `wasSuccessful`, `recentlySuccessful`.
+ 
+@@ -162,7 +176,7 @@
+ 
+   return (
+     <>
+-      <Form ref={formRef} method='post' action='/users'>
++      <Form headers={{ "X-CSRF-Token": csrfToken }} ref={formRef} method='post' action='/users'>
+         {({errors}) => (
+           <>
+             <input type='text' name='name'/>
+@@ -186,7 +200,7 @@
+ `errorBag`, `resetOnSuccess`, multi-step forms, or client-side validation
+ with `setError`:
+ [`references/advanced-forms.md`](references/advanced-forms.md) (~330 lines) — full
+-`useForm` API, transform examples, error bag scoping, multi-step wizard
++`useForm` API, transform examples, error scoping and adapter limitations, multi-step wizard
+ patterns, and client-side validation.
+ 
+ **Do NOT load** `advanced-forms.md` when using `<Form>` component for simple
+@@ -203,7 +217,7 @@
+ 
+ export default function EditProfile({ user }: Props) {
+   return (
+-    <Form method="patch" action="/profile">
++    <Form headers={{ "X-CSRF-Token": csrfToken }} method="patch" action="/profile">
+       {({ errors, processing, progress }) => (
+         <>
+           <input type="text" name="name" defaultValue={user.name} />
+@@ -234,36 +248,29 @@
+ Preview / validation → `useState` alongside either approach, see
+ [`references/file-uploads.md`](references/file-uploads.md).
+ 
+-## Vue / Svelte
+-
+-All examples above use React syntax. For Vue 3 or Svelte equivalents:
+-
+-- **Vue 3**: [`references/vue.md`](references/vue.md) — `<Form>` with `#default` scoped slot, `useForm` returns reactive proxy (`form.email` not `setData`), `v-model` binding
+-- **Svelte**: [`references/svelte.md`](references/svelte.md) — `<Form>` with `{#snippet}` syntax, `useForm` returns Writable store (`$form.email`), `bind:value`, ref exposes methods only (not reactive state)
+-
+-**MANDATORY — READ THE MATCHING FILE** when the project uses Vue or Svelte.
+-
+ ## Troubleshooting
+ 
+ | Symptom | Cause | Fix |
+ |---------|-------|-----|
+ | No access to `errors`/`processing` | Plain children instead of render function | `<Form>` children should be `{({ errors, processing }) => (...)}` |
+ | Form sends GET instead of POST | Missing `method` prop | Add `method="post"` (or `"patch"`, `"delete"`) |
+-| File upload sends empty body | PUT/PATCH with file | Multipart limitation — Inertia auto-adds `_method` field to convert to POST |
++| File upload sends empty body | Handler only decodes JSON | Implement bounded multipart parsing. Go supports multipart PATCH; `_method` spoofing is not automatic. |
+ | Errors don't clear after fixing field | Stale error state | Errors auto-clear on next submit; use `clearErrors('field')` for immediate clearing |
+-| `isDirty` always false | Using `value` instead of `defaultValue` | Controlled inputs (`value=`) bypass dirty tracking — use `defaultValue` |
++| Unexpected dirty/reset state | Input state and defaults disagree | Check actual input events and defaults; prefer uncontrolled defaults for simple forms, and test reset behavior for controlled inputs |
+ | `progress` is always `null` | No file input in form | Progress tracking only activates when `<Form>` detects a file input |
+ | Checkbox sends `"on"` | No explicit `value` | Add `value="1"` to checkbox inputs |
+-| Form submits twice in dev | React StrictMode double-invocation | Normal in development — StrictMode remounts components. Only fires once in production |
++| Form submits twice in dev | Duplicate handler, effect, or native plus Inertia submission | Inspect both requests. StrictMode does not normally double-call a user event handler; do not dismiss duplicate mutations. |
+ | Used `useForm` for file upload with preview | `onChange` + `useState` mistaken for "programmatic data manipulation" | `<Form>` + `useState` for preview UI. `useForm` is only needed when form *submission data* must live in React state (multi-step, dynamic add/remove fields). File preview is local UI state, not form data |
+ 
+ ## Related Skills
+-- **Server-side PRG & errors** → `inertia-rails-controllers` (redirect_back, to_hash, flash)
++- **Server-side PRG & errors** → `inertia-go-controllers` (303 redirects, field errors, flash)
+ - **shadcn inputs** → `shadcn-inertia` (Input/Select adaptation, toast UI)
+-- **Page props typing** → `inertia-rails-typescript` (`type Props` not `interface`, TS2344)
++- **Page props typing** → `inertia-go-typescript` (`type Props` not `interface`, TS2344)
+ 
+ **MANDATORY — READ ENTIRE FILE** when handling file uploads with image preview,
+-Active Storage, or direct uploads:
++Go storage adapter, or direct uploads:
+ [`references/file-uploads.md`](references/file-uploads.md) (~200 lines) — image preview
+-with `<Form>`, Active Storage integration, direct upload setup, multiple files,
++with `<Form>`, Go storage adapter integration, direct upload setup, multiple files,
+ and progress tracking.
++
++Examples above use `const { csrfToken } = usePage().props` inside the component. Include that binding/import where a snippet is used; never hardcode a token.
+--- original/references/advanced-forms.md
++++ adapted/references/advanced-forms.md
+@@ -1,6 +1,6 @@
+ # Advanced Form Patterns
+ 
+-Advanced form handling for Inertia.js + Rails + React.
++Advanced form handling for Inertia.js + Go + React.
+ 
+ ## Table of Contents
+ 
+@@ -36,7 +36,7 @@
+ 
+   return (
+     <div className="grid grid-cols-2 gap-8">
+-      <form onSubmit={e => { e.preventDefault(); form.put(`/products/${product.id}`) }}>
++      <form onSubmit={e => { e.preventDefault(); form.put(`/products/${product.id}`, { headers: { "X-CSRF-Token": csrfToken } }) }}>
+         <input value={form.data.name} onChange={e => form.setData('name', e.target.value)} />
+         {form.errors.name && <span>{form.errors.name}</span>}
+         {/* ... more fields */}
+@@ -50,7 +50,7 @@
+ }
+ ```
+ 
+-**For everything else, use `<Form>`** — it handles CSRF, redirects, errors, transforms, file detection, and history state with zero setup.
++**For everything else, use `<Form>`** — it handles the Inertia visit lifecycle; supply the project CSRF header and implement the matching server input contract.
+ 
+ ### useForm API
+ 
+@@ -82,7 +82,7 @@
+ 
+ ### With `<Form>` component:
+ ```tsx
+-<Form
++<Form headers={{ "X-CSRF-Token": csrfToken }}
+   method="post"
+   action="/events"
+   transform={(data) => ({
+@@ -101,9 +101,9 @@
+   e.preventDefault()
+   form.transform((data) => ({
+     ...data,
+-    price: parseFloat(data.price) * 100, // cents
++    price: data.price, // Send a decimal string; the server validates currency/precision.
+   }))
+-  form.post('/products')
++  form.post('/products', { headers: { "X-CSRF-Token": csrfToken } })
+ }
+ ```
+ 
+@@ -127,8 +127,7 @@
+ 
+ ## Nested Data
+ 
+-Rails accepts nested attributes via strong parameters. Structure
+-your form data to match.
++Go decodes an explicit nested JSON struct. Match field names and types exactly; there is no automatic nested-attributes persistence.
+ 
+ ### With `useForm`:
+ ```tsx
+@@ -136,7 +135,7 @@
+   user: {
+     name: '',
+     email: '',
+-    address_attributes: {
++    address: {
+       street: '',
+       city: '',
+       zip: '',
+@@ -145,40 +144,53 @@
+ })
+ 
+ // Update nested field
+-form.setData('user.address_attributes.city', 'New York')
++form.setData('user.address.city', 'New York')
+ ```
+ 
+ ### With `<Form>` component:
+ ```tsx
+-<Form method="post" action="/users">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users">
+   {({ errors }) => (
+     <>
+       <input name="user[name]" />
+       <input name="user[email]" />
+-      <input name="user[address_attributes][street]" />
+-      <input name="user[address_attributes][city]" />
++      <input name="user[address][street]" />
++      <input name="user[address][city]" />
+     </>
+   )}
+ </Form>
+ ```
+ 
+-Rails controller:
+-```ruby
+-def user_params
+-  params.require(:user).permit(
+-    :name, :email,
+-    address_attributes: [:street, :city, :zip]
+-  )
+-end
++Go input contract:
++```go
++type AddressInput struct {
++    Street string `json:"street"`
++    City string `json:"city"`
++    ZIP string `json:"zip"`
++}
++type UserInput struct {
++    Name string `json:"name"`
++    Email string `json:"email"`
++    Address AddressInput `json:"address"`
++}
++// Decode the matching top-level user object strictly, validate once, then map
++// to an application-owned command. The operation owns related writes.
+ ```
+ 
+ ## Multiple Forms on One Page
+ 
+-Use error bags to namespace errors when multiple forms appear on the
+-same page (e.g., login + register on the same screen).
+-
+-```tsx
+-<Form method="post" action="/login" errorBag="login">
++Each `<Form>` / `useForm` instance owns the errors from its own submission callback.
++Keep the starter's flat `ValidationErrors` and omit `errorBag`, including when two forms
++share a field name. Gonertia v3.0.0 does not automatically translate `X-Inertia-Error-Bag`
++into a nested `errors[bag]` response. Setting `errorBag` only on the client makes the
++client read an absent bag and can silently discard validation failures.
++
++For a feature that truly requires named server error bags, implement that explicit
++nested response/flash contract and test both forms, the redirected GET, and partial
++reloads before enabling the client option. The following works with the starter:
++
++```tsx
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/login">
+   {({ errors }) => (
+     <>
+       <input name="email" />
+@@ -187,7 +199,7 @@
+   )}
+ </Form>
+ 
+-<Form method="post" action="/register" errorBag="register">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/register">
+   {({ errors }) => (
+     <>
+       <input name="email" />
+@@ -202,7 +214,7 @@
+ Confirm before submitting, or conditionally prevent submission.
+ 
+ ```tsx
+-<Form
++<Form headers={{ "X-CSRF-Token": csrfToken }}
+   method="delete"
+   action={`/users/${user.id}`}
+   onBefore={() => confirm('Delete this user?')}
+@@ -218,7 +230,7 @@
+ const handleSubmit = (e: React.FormEvent) => {
+   e.preventDefault()
+   if (!confirm('Submit?')) return
+-  form.post('/users')
++  form.post('/users', { headers: { "X-CSRF-Token": csrfToken } })
+ }
+ ```
+ 
+@@ -242,7 +254,7 @@
+ 
+ With `<Form>`:
+ ```tsx
+-<Form method="post" action="/users">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users">
+   {({ reset, clearErrors, wasSuccessful }) => (
+     <>
+       {/* fields */}
+@@ -255,7 +267,7 @@
+ 
+ ## Dynamic Fields
+ 
+-Adding/removing fields dynamically requires `useForm` (not `<Form>`).
++Use `useForm` when dynamic field values need explicit state; a Form with correctly named dynamic inputs is also valid. Use stable row keys when rows can be removed/reordered.
+ 
+ ```tsx
+ const form = useForm({
+@@ -271,7 +283,7 @@
+ }
+ 
+ return (
+-  <form onSubmit={e => { e.preventDefault(); form.post('/orders') }}>
++  <form onSubmit={e => { e.preventDefault(); form.post('/orders', { headers: { "X-CSRF-Token": csrfToken } }) }}>
+     {form.data.items.map((item, index) => (
+       <div key={index}>
+         <input
+@@ -305,7 +317,7 @@
+   email: '', password: '',  // step 1
+   name: '', company: '',    // step 2
+   plan: 'starter' as const, // step 3
+-})
++}).dontRemember('password')
+ 
+ function nextStep() {
+   form.clearErrors()
+@@ -316,10 +328,10 @@
+   setStep(s => s + 1)
+ }
+ 
+-// Single POST at the end — Rails sees one standard action
++// Single POST at the end — the Go operation validates the complete command
+ const submit = (e: React.FormEvent) => {
+   e.preventDefault()
+-  form.post('/onboarding')
++  form.post('/onboarding', { headers: { "X-CSRF-Token": csrfToken } })
+ }
+ ```
+ 
+@@ -334,7 +346,7 @@
+ 
+ ```tsx
+ // With <Form>
+-<Form method="post" action="/users" invalidateCacheTags={['users', 'dashboard']}>
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/users" invalidateCacheTags={['users', 'dashboard']}>
+   {({ errors, processing }) => (
+     <>{/* fields */}</>
+   )}
+@@ -342,12 +354,13 @@
+ 
+ // With useForm
+ form.post('/users', {
++  headers: { "X-CSRF-Token": csrfToken },
+   invalidateCacheTags: ['users', 'dashboard'],
+ })
+ ```
+ 
+ Tags must match `cacheTags` set on `<Link prefetch cacheTags="...">` — see
+-`inertia-rails-pages` navigation reference for prefetch tag setup.
++`inertia-go-pages` navigation reference for prefetch tag setup.
+ 
+ ## Client-Side Validation
+ 
+@@ -359,8 +372,8 @@
+   e.preventDefault()
+   form.clearErrors()
+ 
+-  if (form.data.password.length < 8) {
+-    form.setError('password', 'Must be at least 8 characters')
++  if (form.data.password.length < 12) {
++    form.setError('password', 'Must be at least 12 characters')
+     return
+   }
+   if (form.data.password !== form.data.password_confirmation) {
+@@ -368,7 +381,8 @@
+     return
+   }
+ 
+-  form.post('/register')
+-}
+-```
+-```
++  form.post('/register', { headers: { "X-CSRF-Token": csrfToken } })
++}
++```
++
++Examples above use `const { csrfToken } = usePage().props` inside the component. Include that binding/import where a snippet is used; never hardcode a token.
+--- original/references/file-uploads.md
++++ adapted/references/file-uploads.md
+@@ -1,13 +1,13 @@
+ # File Uploads
+ 
+-File upload handling for Inertia.js + Rails with Active Storage.
++File upload handling for Inertia.js + Go with an explicit bounded multipart backend. Upload routes/storage are not installed in this starter; implement and test that boundary before using these examples.
+ 
+ ## Table of Contents
+ 
+ - [Basic Upload with Form Component](#basic-upload-with-form-component)
+ - [Upload with useForm](#upload-with-useform)
+ - [Progress Tracking](#progress-tracking)
+-- [Active Storage Backend](#active-storage-backend)
++- [Go Multipart Backend](#go-multipart-backend)
+ - [Multiple Files](#multiple-files)
+ - [Image Preview](#image-preview)
+ - [Direct Uploads](#direct-uploads)
+@@ -19,7 +19,7 @@
+ Inertia auto-detects file inputs and switches to `multipart/form-data`.
+ 
+ ```tsx
+-<Form method="post" action="/avatars">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/avatars">
+   {({ progress, processing }) => (
+     <>
+       <input type="file" name="avatar" accept="image/*" />
+@@ -34,7 +34,7 @@
+ </Form>
+ ```
+ 
+-No manual `FormData` construction needed. No special headers.
++No manual `FormData` construction needed. Include the project X-CSRF-Token header; let the browser set the multipart content type and boundary.
+ 
+ ## Upload with useForm
+ 
+@@ -46,6 +46,7 @@
+ const handleSubmit = (e: React.FormEvent) => {
+   e.preventDefault()
+   form.post('/avatars', {
++  headers: { "X-CSRF-Token": csrfToken },
+     forceFormData: true, // ensure FormData even if no file selected
+   })
+ }
+@@ -70,7 +71,7 @@
+ 
+ ```tsx
+ // Form component
+-<Form method="post" action="/documents" onProgress={(progress) => {
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/documents" onProgress={(progress) => {
+   console.log(`${progress.percentage}% uploaded`)
+ }}>
+   {({ progress }) => (
+@@ -88,34 +89,28 @@
+ }
+ ```
+ 
+-## Active Storage Backend
++## Go Multipart Backend
+ 
+-```ruby
+-# app/controllers/avatars_controller.rb
+-class AvatarsController < ApplicationController
+-  def create
+-    current_user.avatar.attach(params[:avatar])
+-    redirect_to profile_path, notice: "Avatar uploaded!"
+-  end
+-end
++The starter caps JSON bodies at 16 KiB. Add a separately bounded upload route/middleware; simply calling ParseMultipartForm behind the current cap does not enable larger uploads.
+ 
+-# app/models/user.rb
+-class User < ApplicationRecord
+-  has_one_attached :avatar
+-end
++```go
++r.Body = http.MaxBytesReader(w, r.Body, 8<<20)
++if err := r.ParseMultipartForm(1 << 20); err != nil {
++    http.Error(w, "invalid or oversized upload", http.StatusBadRequest)
++    return
++}
++defer r.MultipartForm.RemoveAll()
++file, header, err := r.FormFile("avatar")
++if err != nil { http.Error(w, "avatar is required", 400); return }
++defer file.Close()
+ ```
+ 
+-Strong parameters for files:
+-```ruby
+-def user_params
+-  params.require(:user).permit(:name, :email, :avatar)
+-end
+-```
++Authenticate and check CSRF before parsing. The storage operation must bound size, validate actual content, generate its own object name, ignore client path components and enforce ownership. `header.Filename` and client MIME type are untrusted. Return success only after durable storage and metadata persistence succeed; define cleanup for partial failure.
+ 
+ ## Multiple Files
+ 
+ ```tsx
+-<Form method="post" action="/documents">
++<Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/documents">
+   {({ progress }) => (
+     <>
+       <input type="file" name="documents[]" multiple />
+@@ -126,15 +121,7 @@
+ </Form>
+ ```
+ 
+-Rails side:
+-```ruby
+-def create
+-  params[:documents].each do |doc|
+-    current_user.documents.attach(doc)
+-  end
+-  redirect_to documents_path, notice: "#{params[:documents].size} files uploaded"
+-end
+-```
++Go multipart field names are literal. Inertia's array conversion may emit indexed keys such as `documents[0]`; implement that exact allowlisted naming contract, with a maximum file count and per-file/total limits. Do not assume Rails bracket parsing. Test the real browser payload against the handler.
+ 
+ ## Image Preview
+ 
+@@ -143,6 +130,7 @@
+ ```tsx
+ function AvatarUpload() {
+   const [preview, setPreview] = useState<string | null>(null)
++  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
+ 
+   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const file = e.target.files?.[0]
+@@ -152,7 +140,7 @@
+   }
+ 
+   return (
+-    <Form method="post" action="/avatars">
++    <Form headers={{ "X-CSRF-Token": csrfToken }} method="post" action="/avatars">
+       {({ progress, processing }) => (
+         <>
+           {preview && <img src={preview} alt="Preview" className="w-24 h-24 rounded-full" />}
+@@ -168,32 +156,8 @@
+ 
+ ## Direct Uploads
+ 
+-For large files, use Active Storage direct uploads to upload directly
+-to the storage service (S3, GCS) instead of through the Rails server.
++For large files, a backend can issue a short-lived upload URL for an authorized object key. The browser uploads to storage, then submits the returned upload identifier through an Inertia mutation. The server must verify ownership, expected size/type, completion and single-use semantics before attaching it.
+ 
+-```tsx
+-import { DirectUpload } from '@rails/activestorage'
++Do not port Active Storage signed IDs or its JavaScript package. Select the actual storage provider first and use its documented signing/verification API. A client-provided public URL is not proof of a completed authorized upload.
+ 
+-function uploadFile(file: File): Promise<string> {
+-  return new Promise((resolve, reject) => {
+-    const upload = new DirectUpload(file, '/rails/active_storage/direct_uploads')
+-    upload.create((error, blob) => {
+-      if (error) reject(error)
+-      else resolve(blob.signed_id)
+-    })
+-  })
+-}
+-```
+-
+-Then submit the signed ID via Inertia form:
+-```tsx
+-const form = useForm({ avatar: '' })
+-
+-const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+-  const file = e.target.files?.[0]
+-  if (file) {
+-    const signedId = await uploadFile(file)
+-    form.setData('avatar', signedId)
+-  }
+-}
+-```
++Examples above use `const { csrfToken } = usePage().props` inside the component. Include that binding/import where a snippet is used; never hardcode a token.
+--- original/references/svelte.md
++++ adapted/references/svelte.md
+@@ -1,232 +0,0 @@
+-# Svelte Form Patterns
+-
+-Svelte 5 equivalents for every pattern in the parent SKILL.md. Svelte 4 syntax
+-is noted in parentheses where it differs. All concepts, NEVER rules, and decision
+-matrices from the parent apply unchanged — only syntax differs.
+-
+-## `<Form>` Component
+-
+-Svelte 5 uses `{#snippet}` for the children render pattern:
+-
+-```svelte
+-<script lang="ts">
+-  import { Form } from '@inertiajs/svelte'
+-</script>
+-
+-<Form method="post" action="/users">
+-  {#snippet children({ errors, processing })}
+-    <input type="text" name="name" />
+-    {#if errors.name}<span class="error">{errors.name}</span>{/if}
+-
+-    <input type="email" name="email" />
+-    {#if errors.email}<span class="error">{errors.email}</span>{/if}
+-
+-    <button type="submit" disabled={processing}>
+-      {processing ? 'Creating...' : 'Create User'}
+-    </button>
+-  {/snippet}
+-</Form>
+-```
+-
+-Svelte 4: `<Form let:errors let:processing>` instead of `{#snippet}`.
+-
+-### Delete Form
+-
+-```svelte
+-<Form method="delete" action={`/posts/${post.id}`}>
+-  {#snippet children({ processing })}
+-    <button type="submit" disabled={processing}>
+-      {processing ? 'Deleting...' : 'Delete Post'}
+-    </button>
+-  {/snippet}
+-</Form>
+-```
+-
+-### Edit Form (Pre-populated)
+-
+-```svelte
+-<Form method="patch" action={`/posts/${post.id}`}>
+-  {#snippet children({ errors, processing })}
+-    <input type="text" name="title" value={post.title} />
+-    {#if errors.title}<span class="error">{errors.title}</span>{/if}
+-
+-    <label>
+-      <input type="checkbox" name="published" value="1" checked={post.published} />
+-      Published
+-    </label>
+-
+-    <button type="submit" disabled={processing}>
+-      {processing ? 'Saving...' : 'Update Post'}
+-    </button>
+-  {/snippet}
+-</Form>
+-```
+-
+-### Key Snippet Properties
+-
+-| Property | Type | Purpose |
+-|----------|------|---------|
+-| `errors` | `Record<string, string>` | Validation errors keyed by field name |
+-| `processing` | `boolean` | True while request is in flight |
+-| `progress` | `{ percentage: number } \| null` | Upload progress (file uploads only) |
+-| `hasErrors` | `boolean` | True if any errors exist |
+-| `wasSuccessful` | `boolean` | True after last submit succeeded |
+-| `recentlySuccessful` | `boolean` | True for 2s after success |
+-| `isDirty` | `boolean` | True if any input changed from initial value |
+-| `reset` | `(...fields) => void` | Reset specific fields or all fields |
+-| `clearErrors` | `(...fields) => void` | Clear specific errors or all errors |
+-
+-### Event Binding
+-
+-Svelte 5 uses callback props (same names as React):
+-
+-```svelte
+-<Form
+-  method="post"
+-  action="/users"
+-  onSuccess={handleSuccess}
+-  onError={handleError}
+-  onBefore={() => confirm('Submit?')}
+->
+-```
+-
+-Svelte 4: `on:success={handleSuccess}`, `on:error={handleError}`.
+-
+-### External Access with `bind:this`
+-
+-**Important limitation:** In Svelte, the `<Form>` ref exposes **methods only**
+-(submit, reset, clearErrors, etc.) — NOT reactive state. Access `isDirty`,
+-`errors`, `processing` etc. via the snippet props instead.
+-
+-```svelte
+-<script lang="ts">
+-  import { Form } from '@inertiajs/svelte'
+-  import type { FormComponentRef } from '@inertiajs/core'
+-
+-  let formRef: FormComponentRef | undefined
+-</script>
+-
+-<Form bind:this={formRef} method="post" action="/users">
+-  {#snippet children({ errors })}
+-    <input type="text" name="name" />
+-    {#if errors.name}<span class="error">{errors.name}</span>{/if}
+-  {/snippet}
+-</Form>
+-<button onclick={() => formRef?.submit()}>Submit</button>
+-<button onclick={() => formRef?.reset()}>Reset</button>
+-```
+-
+-## `useForm` Hook
+-
+-Svelte's `useForm` returns a Writable store — access data via `$form`:
+-
+-```svelte
+-<script lang="ts">
+-  import { useForm } from '@inertiajs/svelte'
+-
+-  let { product }: { product: Product } = $props()
+-
+-  const form = useForm({
+-    name: product.name,
+-    price: product.price,
+-    description: product.description,
+-  })
+-
+-  const handleSubmit = () => {
+-    $form.put(`/products/${product.id}`)
+-  }
+-</script>
+-
+-<form onsubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+-  <input bind:value={$form.name} />
+-  {#if $form.errors.name}<span>{$form.errors.name}</span>{/if}
+-
+-  <input bind:value={$form.price} type="number" />
+-  {#if $form.errors.price}<span>{$form.errors.price}</span>{/if}
+-
+-  <button disabled={$form.processing}>Save</button>
+-</form>
+-
+-<!-- Preview consumes form data outside the form -->
+-<ProductPreview product={$form.data()} />
+-```
+-
+-**Key difference from React:** Use `$form.field` (store auto-subscription) for
+-both reading and writing. Use `bind:value` for two-way binding.
+-
+-### useForm API (Svelte-specific)
+-
+-```ts
+-const form = useForm({ email: '', password: '' })
+-
+-$form.email            // Access via store subscription
+-$form.email = 'new'    // Direct assignment via store
+-$form.data()           // Get all current data as plain object
+-$form.post(url)        // POST request
+-$form.put(url)         // PUT request
+-$form.patch(url)       // PATCH request
+-$form.delete(url)      // DELETE request
+-$form.processing       // boolean
+-$form.errors           // { field: "message" }
+-$form.hasErrors        // boolean
+-$form.progress         // Upload progress
+-$form.reset()          // Reset all or specific fields
+-$form.clearErrors()    // Clear all or specific errors
+-$form.isDirty          // boolean
+-$form.transform(cb)    // Transform data before send
+-$form.wasSuccessful    // boolean
+-$form.recentlySuccessful // boolean (2s window)
+-```
+-
+-## File Uploads
+-
+-Same auto-detection as React — `<Form>` detects file inputs and switches to FormData:
+-
+-```svelte
+-<Form method="patch" action="/profile">
+-  {#snippet children({ errors, processing, progress })}
+-    <input type="text" name="name" value={user.name} />
+-    {#if errors.name}<span class="error">{errors.name}</span>{/if}
+-
+-    <input type="file" name="avatar" />
+-    {#if errors.avatar}<span class="error">{errors.avatar}</span>{/if}
+-
+-    {#if progress}
+-      <progress value={progress.percentage ?? 0} max="100" />
+-    {/if}
+-
+-    <button type="submit" disabled={processing}>
+-      {processing ? 'Uploading...' : 'Save'}
+-    </button>
+-  {/snippet}
+-</Form>
+-```
+-
+-With `useForm`:
+-
+-```svelte
+-<script lang="ts">
+-  import { useForm } from '@inertiajs/svelte'
+-
+-  const form = useForm<{ avatar: File | null }>({
+-    avatar: null,
+-  })
+-
+-  const handleFile = (e: Event) => {
+-    const target = e.target as HTMLInputElement
+-    $form.avatar = target.files?.[0] ?? null
+-  }
+-
+-  const handleSubmit = () => {
+-    $form.post('/avatars', { forceFormData: true })
+-  }
+-</script>
+-
+-<form onsubmit={(e) => { e.preventDefault(); handleSubmit() }}>
+-  <input type="file" onchange={handleFile} />
+-  {#if $form.progress}
+-    <progress value={$form.progress.percentage} max="100" />
+-  {/if}
+-  <button disabled={$form.processing}>Upload</button>
+-</form>
+-```
+--- original/references/vue.md
++++ adapted/references/vue.md
+@@ -1,242 +0,0 @@
+-# Vue 3 Form Patterns
+-
+-Vue 3 equivalents for every pattern in the parent SKILL.md. All concepts, NEVER rules,
+-and decision matrices from the parent apply unchanged — only syntax differs.
+-
+-## `<Form>` Component
+-
+-Uses `#default` scoped slot instead of React render function:
+-
+-```vue
+-<script setup lang="ts">
+-import { Form } from '@inertiajs/vue3'
+-</script>
+-
+-<template>
+-  <Form method="post" action="/users">
+-    <template #default="{ errors, processing }">
+-      <input type="text" name="name" />
+-      <span v-if="errors.name" class="error">{{ errors.name }}</span>
+-
+-      <input type="email" name="email" />
+-      <span v-if="errors.email" class="error">{{ errors.email }}</span>
+-
+-      <button type="submit" :disabled="processing">
+-        {{ processing ? 'Creating...' : 'Create User' }}
+-      </button>
+-    </template>
+-  </Form>
+-</template>
+-```
+-
+-Plain children (no slot) work but give no access to errors/processing/progress.
+-
+-### Delete Form
+-
+-```vue
+-<template>
+-  <Form method="delete" :action="`/posts/${post.id}`">
+-    <template #default="{ processing }">
+-      <button type="submit" :disabled="processing">
+-        {{ processing ? 'Deleting...' : 'Delete Post' }}
+-      </button>
+-    </template>
+-  </Form>
+-</template>
+-```
+-
+-### Edit Form (Pre-populated)
+-
+-Use `method="patch"` with `:value` or plain `value` for initial values:
+-
+-```vue
+-<template>
+-  <Form method="patch" :action="`/posts/${post.id}`">
+-    <template #default="{ errors, processing }">
+-      <input type="text" name="title" :value="post.title" />
+-      <span v-if="errors.title" class="error">{{ errors.title }}</span>
+-
+-      <label>
+-        <input type="checkbox" name="published" value="1" :checked="post.published" />
+-        Published
+-      </label>
+-
+-      <button type="submit" :disabled="processing">
+-        {{ processing ? 'Saving...' : 'Update Post' }}
+-      </button>
+-    </template>
+-  </Form>
+-</template>
+-```
+-
+-### Key Slot Properties
+-
+-| Property | Type | Purpose |
+-|----------|------|---------|
+-| `errors` | `Record<string, string>` | Validation errors keyed by field name |
+-| `processing` | `boolean` | True while request is in flight |
+-| `progress` | `{ percentage: number } \| null` | Upload progress (file uploads only) |
+-| `hasErrors` | `boolean` | True if any errors exist |
+-| `wasSuccessful` | `boolean` | True after last submit succeeded |
+-| `recentlySuccessful` | `boolean` | True for 2s after success |
+-| `isDirty` | `boolean` | True if any input changed from initial value |
+-| `reset` | `(...fields) => void` | Reset specific fields or all fields |
+-| `clearErrors` | `(...fields) => void` | Clear specific errors or all errors |
+-
+-### Event Binding
+-
+-Vue uses standard event syntax on `<Form>`:
+-
+-```vue
+-<Form
+-  method="post"
+-  action="/users"
+-  @success="handleSuccess"
+-  @error="handleError"
+-  @before="() => confirm('Submit?')"
+->
+-```
+-
+-### External Access with `ref`
+-
+-```vue
+-<script setup lang="ts">
+-import { ref } from 'vue'
+-import { Form } from '@inertiajs/vue3'
+-import type { FormComponentRef } from '@inertiajs/core'
+-
+-const formRef = ref<FormComponentRef | null>(null)
+-</script>
+-
+-<template>
+-  <Form ref="formRef" method="post" action="/users">
+-    <template #default="{ errors }">
+-      <input type="text" name="name" />
+-      <span v-if="errors.name" class="error">{{ errors.name }}</span>
+-    </template>
+-  </Form>
+-  <button @click="formRef?.submit()">Submit</button>
+-  <button @click="formRef?.reset()">Reset</button>
+-</template>
+-```
+-
+-## `useForm` Hook
+-
+-Vue's `useForm` returns a reactive proxy — access/set data directly on `form`,
+-no `setData` needed:
+-
+-```vue
+-<script setup lang="ts">
+-import { useForm } from '@inertiajs/vue3'
+-
+-const props = defineProps<{ product: Product }>()
+-
+-const form = useForm({
+-  name: props.product.name,
+-  price: props.product.price,
+-  description: props.product.description,
+-})
+-
+-const handleSubmit = () => {
+-  form.put(`/products/${props.product.id}`)
+-}
+-</script>
+-
+-<template>
+-  <form @submit.prevent="handleSubmit">
+-    <input v-model="form.name" />
+-    <span v-if="form.errors.name">{{ form.errors.name }}</span>
+-
+-    <input v-model="form.price" type="number" />
+-    <span v-if="form.errors.price">{{ form.errors.price }}</span>
+-
+-    <button :disabled="form.processing">Save</button>
+-  </form>
+-
+-  <!-- Preview consumes form data outside the form -->
+-  <ProductPreview :product="form.data()" />
+-</template>
+-```
+-
+-**Key difference from React:** Use `v-model` for two-way binding instead of
+-`value` + `onChange` + `setData`. Access current data with `form.data()` method.
+-
+-### useForm API (Vue-specific)
+-
+-```ts
+-const form = useForm({
+-  email: '',
+-  password: '',
+-})
+-
+-form.email            // Direct access (reactive proxy)
+-form.email = 'new'    // Direct assignment (no setData needed)
+-form.data()           // Get all current data as plain object
+-form.post(url)        // POST request
+-form.put(url)         // PUT request
+-form.patch(url)       // PATCH request
+-form.delete(url)      // DELETE request
+-form.processing       // boolean
+-form.errors           // { field: "message" }
+-form.hasErrors        // boolean
+-form.progress         // Upload progress
+-form.reset()          // Reset all or specific fields
+-form.clearErrors()    // Clear all or specific errors
+-form.isDirty          // boolean
+-form.transform(cb)    // Transform data before send
+-form.wasSuccessful    // boolean
+-form.recentlySuccessful // boolean (2s window)
+-```
+-
+-## File Uploads
+-
+-Same auto-detection as React — `<Form>` detects file inputs and switches to FormData:
+-
+-```vue
+-<template>
+-  <Form method="patch" action="/profile">
+-    <template #default="{ errors, processing, progress }">
+-      <input type="text" name="name" :value="user.name" />
+-      <span v-if="errors.name" class="error">{{ errors.name }}</span>
+-
+-      <input type="file" name="avatar" />
+-      <span v-if="errors.avatar" class="error">{{ errors.avatar }}</span>
+-
+-      <progress v-if="progress" :value="progress.percentage ?? 0" max="100" />
+-
+-      <button type="submit" :disabled="processing">
+-        {{ processing ? 'Uploading...' : 'Save' }}
+-      </button>
+-    </template>
+-  </Form>
+-</template>
+-```
+-
+-With `useForm`:
+-
+-```vue
+-<script setup lang="ts">
+-import { useForm } from '@inertiajs/vue3'
+-
+-const form = useForm<{ avatar: File | null }>({
+-  avatar: null,
+-})
+-
+-const handleFile = (e: Event) => {
+-  const target = e.target as HTMLInputElement
+-  form.avatar = target.files?.[0] ?? null
+-}
+-
+-const handleSubmit = () => {
+-  form.post('/avatars', { forceFormData: true })
+-}
+-</script>
+-
+-<template>
+-  <form @submit.prevent="handleSubmit">
+-    <input type="file" @change="handleFile" />
+-    <progress v-if="form.progress" :value="form.progress.percentage" max="100" />
+-    <button :disabled="form.processing">Upload</button>
+-  </form>
+-</template>
+-```

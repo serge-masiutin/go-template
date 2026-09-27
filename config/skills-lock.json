@@ -1,0 +1,927 @@
+{
+  "template": {
+    "url": "https://github.com/serge-masiutin/rails-template",
+    "commit": "a315bfbcf29ec14b83c9f05378abd595bc5228e0"
+  },
+  "catalog": "https://evilmartians.com/.well-known/agent-skills/index.json",
+  "skills": [
+    {
+      "name": "clear-writing",
+      "mode": "preserved",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "a315bfbcf29ec14b83c9f05378abd595bc5228e0",
+        "path": ".agents/skills/clear-writing",
+        "name": "clear-writing"
+      },
+      "archive": "third_party/skills/clear-writing.source.tar.gz",
+      "archiveSha256": "c59b8156020130b02172041894ef51478be79db2b3282235fc20fcb8d03e00d4",
+      "patch": "third_party/skills/clear-writing.patch",
+      "patchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceFiles": {
+        "SKILL.md": "17c236d90b65ef8d77d7a14fdbc28bcbb82a5015db692011251236fc6a25e790",
+        "chapters/ch01-reader-context.md": "610f02513dda0b9a0a916dbfcd10fe21c03a050b0cdae2b105543ee357be2d65",
+        "chapters/ch02-words-sentences.md": "9ea4bf1b52c3fefedeba18759a6c4da360e2db4e2eb962646df3155831a7b65c",
+        "chapters/ch03-explanation-evidence.md": "4e1951b4e50c3b7a459af7150925e1b195351e14389b82148b92499bb3299ca7",
+        "chapters/ch04-structure.md": "d7ebbb368ac55ea65e9a929b6cc353b1a58ede191b7c15b8813de5eeac5b24dc",
+        "chapters/ch05-presentation.md": "f994d77c573d2d3914a0558c6c11b36754ecfa557097414d89f143c5a301d898",
+        "chapters/ch06-formats.md": "369be90004e988bfe39a57544061ef3565448b171b153cb35f31f40ab0666b6e",
+        "cheatsheet.md": "b1a7b0a0cc9b0ef13b8cb482befa2bcb63fba85e741243f2452aeca6464ccd22",
+        "glossary.md": "47c9fcdc3f64ebbe5db6c7d59883037dc7912f90074ee12098f4cff58f96ab72",
+        "patterns.md": "ed2b32d05fca8c90fab36541f36c68f393c376a4f1be19711c6c27b13345ccf6",
+        "references/review-cases.md": "87f0f281b3f3dfda3d6875a53d369565d5392aac28e2daceeabd8ecd51bad124"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "chapters/ch01-reader-context.md": "chapters/ch01-reader-context.md",
+        "chapters/ch02-words-sentences.md": "chapters/ch02-words-sentences.md",
+        "chapters/ch03-explanation-evidence.md": "chapters/ch03-explanation-evidence.md",
+        "chapters/ch04-structure.md": "chapters/ch04-structure.md",
+        "chapters/ch05-presentation.md": "chapters/ch05-presentation.md",
+        "chapters/ch06-formats.md": "chapters/ch06-formats.md",
+        "cheatsheet.md": "cheatsheet.md",
+        "glossary.md": "glossary.md",
+        "patterns.md": "patterns.md",
+        "references/review-cases.md": "references/review-cases.md"
+      },
+      "files": {
+        "SKILL.md": "17c236d90b65ef8d77d7a14fdbc28bcbb82a5015db692011251236fc6a25e790",
+        "chapters/ch01-reader-context.md": "610f02513dda0b9a0a916dbfcd10fe21c03a050b0cdae2b105543ee357be2d65",
+        "chapters/ch02-words-sentences.md": "9ea4bf1b52c3fefedeba18759a6c4da360e2db4e2eb962646df3155831a7b65c",
+        "chapters/ch03-explanation-evidence.md": "4e1951b4e50c3b7a459af7150925e1b195351e14389b82148b92499bb3299ca7",
+        "chapters/ch04-structure.md": "d7ebbb368ac55ea65e9a929b6cc353b1a58ede191b7c15b8813de5eeac5b24dc",
+        "chapters/ch05-presentation.md": "f994d77c573d2d3914a0558c6c11b36754ecfa557097414d89f143c5a301d898",
+        "chapters/ch06-formats.md": "369be90004e988bfe39a57544061ef3565448b171b153cb35f31f40ab0666b6e",
+        "cheatsheet.md": "b1a7b0a0cc9b0ef13b8cb482befa2bcb63fba85e741243f2452aeca6464ccd22",
+        "glossary.md": "47c9fcdc3f64ebbe5db6c7d59883037dc7912f90074ee12098f4cff58f96ab72",
+        "patterns.md": "ed2b32d05fca8c90fab36541f36c68f393c376a4f1be19711c6c27b13345ccf6",
+        "references/review-cases.md": "87f0f281b3f3dfda3d6875a53d369565d5392aac28e2daceeabd8ecd51bad124"
+      }
+    },
+    {
+      "name": "design-system",
+      "description": "Create and maintain a consistent design system through component contracts, inventories, and verification, with separate workflows for evolving the system and building interfaces with it.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/design-system.tar.gz",
+      "digest": "sha256:02807c79508cdd86f07c9965a47ad50aa7b086c8695a19bf7c04e043cfbc627c",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "9399554b3b0ed74ea74743a9fe11c303ccb53008f6ae7b2b3bc3a5fddbebff23",
+        "assets/DESIGN.md": "63605f6d530f6324ff4abf745b2c261e0eb98ffe3b61e70c0c4b45c9a15f5daa",
+        "assets/gap-ledger.md": "7dc1155167b6d8fd2f54c52aebc57f18bec9b8ceb03a25a9bbef75f5a8b45218",
+        "assets/inventory.md": "46508fd6145b60517001c6b451e5883c1444a48861dbad1b3e1e92968a271898",
+        "assets/patterns.md": "4a3e6d633dc1707a9a78a7c10a517ac72685be8aefdca9c6045222f8ffa9dfe6",
+        "reference/CONTEXT.md": "bac91eabdeb758e62592767829615a24c19661483be7e80df202155b012e865a",
+        "reference/admission.md": "74f5a912d66bcaa8e50fe149f30e678725ba206f0c7b92aa081efc38f195dbd1",
+        "reference/adoption.md": "48c605936df40b5d8a213ae57e9c3ecb618bb3cb3bd68fc2aead6f4b3de3df3d",
+        "reference/analyze.md": "c6bb46ca79997275150d96d851d370f4caf1e43d9c04a490030dc795127d2f8a",
+        "reference/archive-cleanup.md": "f509818dcb2fbb0121716a0571eac7694578f119c9c4234c7f7549be1daf2bc6",
+        "reference/blind-gates.md": "1ccd607ec54dc6bbb3f2ca0412699dbbb690917b8514524f89dfc46eca8f2aca",
+        "reference/completion.md": "2718b016a59f22416fbbe887704200c19813bfd146cf48ea16f27d9c9d312b6f",
+        "reference/component-proposal.md": "91818ac88d778555fed697d70b4d7eb3ac8a9fe3f58063d9a6b94f0f70fb802d",
+        "reference/contract.md": "0ffa50d29e909d96662052262714b8a49850f252780331bd718878e3bf36d8b8",
+        "reference/craft.md": "7dcb07a29c29165013a658d98753b999ec92b50869231aa9f41853fe52d2bcc0",
+        "reference/delegation.md": "35c4488decfe5926b413089ad62f11e33f2c8ce7548c2aa5047e6e0b28b7b35e",
+        "reference/discovery.md": "a2270a1bd5d853088ee903117dc84b7f56f09680742bca2a2366aabe0d36fc40",
+        "reference/formats.md": "da49718743b411445b2a80ecd136614653128737c3060691d3b9b1c56d416ee5",
+        "reference/gaps.md": "7f382c2e64228acdd1ab4391feeb6ef5e597b5bfbaf68f3be9e7bacde451afd6",
+        "reference/improve.md": "4787a4381db30d7f8402a426a2f67776f7a731333241d23d980d58645aefd260",
+        "reference/migrate.md": "15ff6fd40629808c3054ea946214b009336727865da482cbfdfe0e0ab3c14c2d",
+        "reference/migration-planning.md": "c38aa88f22313ace55e26d9969bad06ab4ee1835cf7531bab128038adbf424a7",
+        "reference/model.md": "fdcf4c68a1a653a05ec17055adc7f339bd2a5b6ef0b0c038a4864c08510cf6b4",
+        "reference/setup.md": "fb9a8696161dd3deab47981f919617ab01afc7e41bd63fb390749ca2b8de7b82",
+        "reference/tokens.md": "c7c50f58a398dc2d3c832ae72ec4a143350993af01338590e75f48f4e40182fb",
+        "reference/triage.md": "3850652295229527b255458ac40fa8860cce0a28600512777ca6169429ddd818",
+        "reference/use.md": "bb91fd30d7e494d245be14a774c35fc4a0d9c3c6f1f97d756bafa830b4a70a9d",
+        "reference/verify.md": "de8d2567b561a462e789442673f22eab34b4287ed10182b19ed69e6ed6edc4d4",
+        "scripts/check-contract.mjs": "961e15907de9a9c2dcd036857869b51847ea61bb5d3e566680829f078216acfc",
+        "scripts/check-staged-contracts.mjs": "1c315774bd1741c750425cb0ff54e739813d089e7b1dc72e85934f39d683ed22",
+        "scripts/generate-indexes.mjs": "d9276201a2124d0be6676546692330966c7284d7eefdff5c2ec521ea23a7f5fa"
+      }
+    },
+    {
+      "name": "go-boot-profiling",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "a315bfbcf29ec14b83c9f05378abd595bc5228e0",
+        "path": ".agents/skills/rails-boot-profiling",
+        "name": "rails-boot-profiling"
+      },
+      "archive": "third_party/skills/go-boot-profiling.source.tar.gz",
+      "archiveSha256": "276891042fd7e2a3dc1d3dced511d52baac565dde57ce3ca5198782c950ac9f6",
+      "patch": "third_party/skills/go-boot-profiling.patch",
+      "patchSha256": "8c60a247011aec3d101d2b10b14699e00c0a03d8334c394d67b94f7fbc6c4530",
+      "sourceFiles": {
+        "SKILL.md": "b1957d419c1d25c5e1b53a66b67f92286ac1a71850e583dd4fd4a85cb88768ed"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md"
+      },
+      "files": {
+        "SKILL.md": "606cbf89017bc1ee504f29ca2224acabbe23ec08813700464abdbe64ecb08b4f"
+      }
+    },
+    {
+      "name": "go-serialization",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "a315bfbcf29ec14b83c9f05378abd595bc5228e0",
+        "path": ".agents/skills/rails-serialization",
+        "name": "rails-serialization"
+      },
+      "archive": "third_party/skills/go-serialization.source.tar.gz",
+      "archiveSha256": "215a278e2ddeb0a9cf54f05fa04a8d8952cfb4fe0a2229fa7073a52634edeaca",
+      "patch": "third_party/skills/go-serialization.patch",
+      "patchSha256": "87f78f4e06a6d722b49e4c8f406ff5403591b0c744811b38d57639edc6c9fc4a",
+      "sourceFiles": {
+        "SKILL.md": "53ce9b90757d90ebd7b9529dd6ecab1cf8976faa72cd740d8ce69d7a89499286",
+        "references/loading-options.md": "f973c154a4f6f90afad8480f42a1c6d2f0001ccc366bdc1d69d5a0f177ff0bec"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/loading-options.md": "references/loading-options.md"
+      },
+      "files": {
+        "SKILL.md": "5f9bc4c6f9b871962084577c2bdec23c8db6446397afce322fc5f38c94850394",
+        "references/loading-options.md": "d4c98272b8ac55b72276cc4fb292ea4d485e62f8b955518cb6a9c960f87d76b4"
+      }
+    },
+    {
+      "name": "good-readme",
+      "description": "Write or rewrite an open source README the way PostCSS, Nano ID, imgproxy, and AnyCable did it: lead with what the project does and how it differs, drop the badges, and never invent a benchmark the repo can't back up.",
+      "type": "skill-md",
+      "url": "https://evilmartians.com/agent-skills/good-readme/SKILL.md",
+      "digest": "sha256:be284e69d5c41cf125d4ce54f34ea6025a6de00f6269d9a091af3a217e360cd2",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "be284e69d5c41cf125d4ce54f34ea6025a6de00f6269d9a091af3a217e360cd2"
+      }
+    },
+    {
+      "name": "inertia-go-architecture",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-architecture",
+        "name": "inertia-rails-architecture"
+      },
+      "archive": "third_party/skills/inertia-go-architecture.source.tar.gz",
+      "archiveSha256": "d0ab1045bd9d49fdbd5a78090ca45da5f8d961b51c6c03df1c6d3fbaabca4545",
+      "patch": "third_party/skills/inertia-go-architecture.patch",
+      "patchSha256": "ec0f124f01e9abc2e71c549fdb0f047461aafad4e5bdb293f366149c2e4102eb",
+      "sourceFiles": {
+        "SKILL.md": "a7d40080e52bb51f8b540629e5030962a30858430fc0f0bfab1aa094f4073639",
+        "references/AGENTS.md": "e68c08812a30c8b9b926bbabda92b910a4ce57bc4b944fd35d8cb3d13153d091",
+        "references/decision-trees.md": "f8f85de8f5fe8c0c2d07590a269afa37dd3120f3063b9040f030ff39693a5ac0"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/AGENTS.md": "references/AGENTS.md",
+        "references/decision-trees.md": "references/decision-trees.md"
+      },
+      "files": {
+        "SKILL.md": "e79ec8f3670b0817a1ab33bddf4a34872e23597abd7840acb0b55a7cbfb63273",
+        "references/AGENTS.md": "a7c39b62ca5a257d5ad22196b4ca282a95553d00264e606e7d149a18b3023c8e",
+        "references/decision-trees.md": "2935a04422e1558d631528e593a93ce688955a3dd756b706f6edb19c4dae5b22"
+      }
+    },
+    {
+      "name": "inertia-go-controllers",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-controllers",
+        "name": "inertia-rails-controllers"
+      },
+      "archive": "third_party/skills/inertia-go-controllers.source.tar.gz",
+      "archiveSha256": "42a0abd68fd52e17e7463408fb1acee232dd433775bd3d91675e67c4b7dfae85",
+      "patch": "third_party/skills/inertia-go-controllers.patch",
+      "patchSha256": "e2fdb93a85cb3691a77148f92f5db1075b9060cfa645137a032a69b0b39fdfad",
+      "sourceFiles": {
+        "SKILL.md": "e272e109d070639adb36fe990cd7acd84a08878ed30fab675ce3224a05f7403f",
+        "references/authorization.md": "1801de8ca9a0d1e5cf92e373567cfe62b5d55247230f27e16170547192dd6eff",
+        "references/configuration.md": "280e87cdaf8f295a2a9a7871d307c86ec4676b73d62890932c3d298127910d60",
+        "references/prop-types.md": "489a75463041d3f2907837e6e09820f69ffd686910f35934942811e392225d31"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/authorization.md": "references/authorization.md",
+        "references/configuration.md": "references/configuration.md",
+        "references/prop-types.md": "references/prop-types.md"
+      },
+      "files": {
+        "SKILL.md": "9ca9ef5e11426670bdedebb10b395ab8cd93fc422ffe3e4eabb8aa4d000c7502",
+        "references/authorization.md": "64bca714694db01eabf370ba21f220a90ff31eb05e5853b966645977c4662e92",
+        "references/configuration.md": "846f0082269b41512a78fa90766421253fb668ab4ed6e44098ef6812f157b12a",
+        "references/prop-types.md": "675b83ae2490acc94b53496a244770a28af0a1f21b28bff6e5a87ac72ecf82f5"
+      }
+    },
+    {
+      "name": "inertia-go-forms",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-forms",
+        "name": "inertia-rails-forms"
+      },
+      "archive": "third_party/skills/inertia-go-forms.source.tar.gz",
+      "archiveSha256": "441dc00cfed9f527fcad55b715b2ac8f07e9765eb67663de408bedf5b7f65840",
+      "patch": "third_party/skills/inertia-go-forms.patch",
+      "patchSha256": "f6e590d87b08f9cb9e5dbabb1dedb89a0e2763a55b2f3043eac38b5a3acbe0f8",
+      "sourceFiles": {
+        "SKILL.md": "3a62123792778d07be398288733cc39fb1f7535ca4b4498d5d20382a72eb6884",
+        "references/advanced-forms.md": "59bbe7e66128857c458b79a6e82e30644d2fdb48d40b1fa8d58886562f5152fe",
+        "references/file-uploads.md": "6200cf668cdaaad7562b0d5276f46e7fbb5211510edff7bb7cdb8e8d7a67b953",
+        "references/svelte.md": "7c8db1d45a69ae4432abd30ba7069bfa90202b21c261e633944119518bbc0555",
+        "references/vue.md": "2e0728df4d557c509b90281f13b1f5650ffadff8816381d38afb0d54a0dbb106"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/advanced-forms.md": "references/advanced-forms.md",
+        "references/file-uploads.md": "references/file-uploads.md",
+        "references/svelte.md": null,
+        "references/vue.md": null
+      },
+      "files": {
+        "SKILL.md": "51029ed133ef17a85db8fa4056aea13e09119d1a07df1670e21fc0a5662007d1",
+        "references/advanced-forms.md": "80aeacff672f575673a413a13f3712f72967918907ceec07d3340f02e16f5c78",
+        "references/file-uploads.md": "cfc88a4e0b249f2f541e42e41d2a215da24bb6a00a119dcd2332efc2e4c6dc6d"
+      },
+      "omissions": "Vue and Svelte examples are omitted because this template supports React; React workflows and Go replacements remain."
+    },
+    {
+      "name": "inertia-go-pages",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-pages",
+        "name": "inertia-rails-pages"
+      },
+      "archive": "third_party/skills/inertia-go-pages.source.tar.gz",
+      "archiveSha256": "05c4970e9d1fc9c080a767b24b285a2b84c399846f7c37714c5d716522c801b3",
+      "patch": "third_party/skills/inertia-go-pages.patch",
+      "patchSha256": "7ac13b24f95c4b22b180abc903f58930d49b4be5d78fc42e7b39122e89cbad22",
+      "sourceFiles": {
+        "SKILL.md": "fab8d8dce5422067c66bb7bbe16ab8f7e8615e4f487aa338f7b605faa67f4bee",
+        "references/layouts.md": "b50e591820f965d598d5204a61a525d5d228dd977b72ff8d30b5a66924e25402",
+        "references/navigation.md": "62f1bcee0327ac7b016abaf376fa31e4761374fb618b428073b6cabf0d6e5c60",
+        "references/svelte.md": "31000736d0855cd12ac1f0fe8877c78b8e4f3a3885b00a0efdfe46f332139df6",
+        "references/vue.md": "ef4cbedc3635dbe1ac5506c908f7b435a77a419f531d804c86189663271d01cb"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/layouts.md": "references/layouts.md",
+        "references/navigation.md": "references/navigation.md",
+        "references/svelte.md": null,
+        "references/vue.md": null
+      },
+      "files": {
+        "SKILL.md": "18cd2aec62422eaaca4173f8304518b3c2b1e2cbf8762ad8345e641ddc5ed17f",
+        "references/layouts.md": "035cda752b237514b9f0256a0a6618649ae7180813be0add2a240810e435ced1",
+        "references/navigation.md": "c92ef580fa88857c7eeeaba65d0a2697299cd39585b0f24db45471a5abd9a6b1"
+      },
+      "omissions": "Vue and Svelte examples are omitted because this template supports React; React workflows and Go replacements remain."
+    },
+    {
+      "name": "inertia-go-setup",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-setup",
+        "name": "inertia-rails-setup"
+      },
+      "archive": "third_party/skills/inertia-go-setup.source.tar.gz",
+      "archiveSha256": "c96763b8f3f4e83cb93b15f48bb3f09ef4d61593f9b6244bea98b611cc943e67",
+      "patch": "third_party/skills/inertia-go-setup.patch",
+      "patchSha256": "e3e1959c755a71424c3dbd2fed5af00115df0b5f67df3177669b673322c85fbf",
+      "sourceFiles": {
+        "SKILL.md": "cba1da55d1a5399477232e774384bf967fb5e0b6f934701e96e0122b612b2a90",
+        "references/claude-md-templates.md": "a4e05ba00b096afe8e1bcd25655f0a0f8980577ffd894c366edc978617dba0b3"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/claude-md-templates.md": "references/claude-md-templates.md"
+      },
+      "files": {
+        "SKILL.md": "d2ff67a85b441e69545ee73c7988ff6c6cde7f672ae79da997ea06805e93102a",
+        "references/claude-md-templates.md": "bbeb36803bd5aa46b47e2218d1ec12a2d383ac11db75d43301b635690f9d40de"
+      }
+    },
+    {
+      "name": "inertia-go-testing",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-testing",
+        "name": "inertia-rails-testing"
+      },
+      "archive": "third_party/skills/inertia-go-testing.source.tar.gz",
+      "archiveSha256": "d5fde6dd3bc047fe85c907ca74087ebb311b3b95076bb397fd3a800cd8ff6b62",
+      "patch": "third_party/skills/inertia-go-testing.patch",
+      "patchSha256": "d2a3624d568ade4eee8b46ea7f1356793a4f79dd5e9c48cd9b9b292df2d36aa2",
+      "sourceFiles": {
+        "SKILL.md": "a527ef9463eb12c5ae37eff62d9ab28e9a86f99efaccba2dfe14aa9a11f25614",
+        "references/minitest.md": "f66eaadd73f78e4e7125cb3f60bde7a85ccab8a77546212bae0ad13efaee8517"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/minitest.md": "references/http-tests.md"
+      },
+      "files": {
+        "SKILL.md": "64ff61c0b2d45f2555bf9d1a7b9d147090d7ce0ab928c35ece3d231915d41b34",
+        "references/http-tests.md": "678200342b8546f4a447e917601c433a8251bd5e6a268a7105fff017dfe7c4fc"
+      }
+    },
+    {
+      "name": "inertia-go-typescript",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/inertia-rails-typescript",
+        "name": "inertia-rails-typescript"
+      },
+      "archive": "third_party/skills/inertia-go-typescript.source.tar.gz",
+      "archiveSha256": "7b4350e822e59c09295002f1529a0b68428c687a4c8c7e2fd0e8492137899f59",
+      "patch": "third_party/skills/inertia-go-typescript.patch",
+      "patchSha256": "f91f26ca3896e3d01e3386534811d1283a9cd3e3bae42fa1c10936ef502ab28a",
+      "sourceFiles": {
+        "SKILL.md": "3f1381841ea2bbe14d7f8ea2cf7c8c2ec69c5e7cea65413e4ef640d78f1d94ea"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md"
+      },
+      "files": {
+        "SKILL.md": "009bdf0f0d19d98cb64cd301b8ecd838f31e8fab0ccbf4e628a0d5b6239474bd"
+      }
+    },
+    {
+      "name": "intent-log",
+      "description": "Keep a shared record of what a person actually wanted, one short list per day tagged with the PRs it produced, so a teammate can catch up on a burst of agent-assisted work without reading every pull request. Written by the agent at the end of a session, not by hand.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/intent-log.tar.gz",
+      "digest": "sha256:b647a9e8835c9328672778037305163572f9cd362752cbfbb9f45dc3cf733fda",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "8604e5f3f803bc498f41915da83b0649259cade33454fc0d9ac4efb43e24b05c",
+        "check.rb": "f1ffba075d810cba2637c849904f7098cce076c3386ae15dcbfc63f677a17b1c",
+        "compose.rb": "0fecdddcd7bce66353aef015993d8f0b6e7dc48ab048f4355a0b63359dad212b",
+        "example/sfruby-cards.md": "a55937e853600cb66da8e1bf03ee4dfe992a4f145f8645f03c88ccf971337ef5",
+        "extract.rb": "4e68e0a163c4966d97e31e24f9b1bd727e26d776d673c60cb1d1c409bfbdd978",
+        "intent-nag.rb": "f2068fa487484bf43c878d3376ee985dbbe90b6620af394eb6f1d2f43ee91005",
+        "intent-stage.rb": "e174c8324519b2607cd5448af0566454e1a6b94bac3b4edd7be0a215fc352d04"
+      }
+    },
+    {
+      "name": "layered-go",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "a315bfbcf29ec14b83c9f05378abd595bc5228e0",
+        "path": ".agents/skills/layered-rails",
+        "name": "layered-rails"
+      },
+      "archive": "third_party/skills/layered-go.source.tar.gz",
+      "archiveSha256": "f0954b2e56d65339376c60fa6b805a7486ceac79751f92199bf826baf1dbf0bd",
+      "patch": "third_party/skills/layered-go.patch",
+      "patchSha256": "179987d7683ca01ff886e88904baae845f27861a168e89928d57c454af255ca9",
+      "sourceFiles": {
+        "SKILL.md": "46ea564dd0b385eea620da5051b2d4c1ebf25d649394746e4858fc4c165cf579",
+        "examples/authorization-to-policy.md": "b8967644ab4a82b0b367b03922573258c1fb6cc059bc6193c7b73bb9c501fbab",
+        "examples/callbacks-to-service.md": "e6026481886d71536905390edbf81bc550c491753cf958d383a9379f0ae125cb",
+        "examples/complex-input-to-form-object.md": "24ca817df9bb61f7a82151be01428e7d5800126df66c74ceccdc44ffdc71d5f9",
+        "examples/current-from-model.md": "f0667dc7dd260dad97cbfb81d9f717cee87ce504739ec2b6189a5bd3090c0907",
+        "examples/god-object-decomposition.md": "ba0d6884381315559f4d13d642177be9ee0b2ed55ab65d7276c88db45510ae93",
+        "examples/implicit-to-explicit-state-machine.md": "b35a2baf455e61079937a729767ac618c5d7cc4b1d53a22ef2ec111500f69c1c",
+        "examples/query-to-query-object.md": "f0cf54b2704120ab6969d3727e4428a30eff75ca95b4a654ccae642a4ffe477b",
+        "examples/view-logic-to-presenter.md": "fd13e09460bb69549761b4a14c1cae79afe939ec710f918234e0f5edbcd1585e",
+        "references/anti-patterns/callbacks.md": "2e090f3eb5582c376eea7a20b68396bb5ec186b49a9e80a77e18d228b9e345c4",
+        "references/anti-patterns/concerns.md": "a90b63850fb6072377acff3805a5989393997f8deddd5bb07bc6427b6ee57b51",
+        "references/anti-patterns/helpers.md": "96e1fd23abdee632022d685e63e1dcc2a2bb83e330bc9c88d8ca65a7cf960af8",
+        "references/anti-patterns/jobs.md": "13f9576f5f4e666bd2def0b0998f5bf44e1a543fbcca7dc35f1b33b583d05f63",
+        "references/anti-patterns/layer-violations.md": "48c04a89ec901b4f325b2d5db0227b0929429b6cd02f81647ee71313ede95895",
+        "references/anti-patterns/service-objects.md": "96dc3dbc9fc3bb5ae999ed0d55667e9cbfad56b5e52faab1b171dc8ad316e990",
+        "references/anti-patterns/testing.md": "bc24968aae252651b2c79e7c18bc3a2a4d5a68bef87968956e572a7daaca1ff3",
+        "references/core/architecture-layers.md": "0a11f0dc24950c2a586ec47bbaf5210696cb5bd9101bcf0aa7bc01bd5aacf800",
+        "references/core/extraction-signals.md": "0413b9bcfca9441555e0b5c43f0a8a4d296a78dbb04f9b5692de139fb3c06ed0",
+        "references/core/specification-test.md": "535e733d009435079fcca5ce15757ea97ff91ac3081425f5da75fe012baee8a9",
+        "references/gems/action-policy.md": "f56a9354d3d9596cbc62d5ab6de1a554e0137b597c4ea21f33bb07ec21c02d9c",
+        "references/gems/active-agent.md": "28dbc84ce2b2d9ee805ee2705c03acc45b97370fb6a0c22397a50d534f4be619",
+        "references/gems/active-delivery.md": "21cf1c373c73f866690eef7d0cf789abc25540d1d22125d175ec0a0dd554e144",
+        "references/gems/active-job-performs.md": "649038dc4527fbf04a15328a9c85e3ffcf7a51dfc04b720d927c96a1d6cef5f5",
+        "references/gems/alba.md": "31f18edc7d34c02a4b81fbc1ce426f062aa312ce7bdf59dce9ddf36a41bc7a00",
+        "references/gems/anyway-config.md": "027d9cb3f2945d73d19aa05b0801a999c93134c7203fff9b0705bbcf5a114701",
+        "references/gems/archspec.md": "5799d8ce38f1b6bdc6b2a247cd81f1d4a26601a546bb10aaad48c13d42e3b62f",
+        "references/gems/rubanok.md": "f6187c54d95fb1e04853ea719f74fcf4fcfdb8b176e6cfe1dce1239d9dc6dae3",
+        "references/gems/view-component.md": "eec0bdf94ff669f1646191a3f88104ce826c96736d1990b098a35477d4156402",
+        "references/gems/workflow.md": "523eafda1331df21f53482990f442fad3cf298f27cbb47dc6286eac1d6c08554",
+        "references/patterns/collaborator-objects.md": "77c38a9fad7ff4c7d05a9b845c86a263aaa1c8e6efbee89fd4057df0ee9df50d",
+        "references/patterns/concerns.md": "a18d4a15741519a5b5b462dff7b6294d4cbf3cdf6c9b52b9a5794b95b4d5d7bd",
+        "references/patterns/filter-objects.md": "3bcc741eae49b3ef9d7104e28eb1997fe52e727e4d9f64b64235cf6857332857",
+        "references/patterns/form-objects.md": "42bb17e80ddb67f3615e0be1fd66c1074676b9af86e37b031e80dbb4d642a022",
+        "references/patterns/policy-objects.md": "d1418cc4207c24488536f2a24bbe655ba9814fbb3bafe92573c5a79b4e4f4dc4",
+        "references/patterns/presenters.md": "1752a030a97332d72da48b67c20ba74ed97446d65dbccd66d693ceec9139efc2",
+        "references/patterns/query-objects.md": "17df1fc5d88635a50800b13c610f684d773d927dd94e9556075965fea26babec",
+        "references/patterns/repositories.md": "b98168e7df3c42a64274f64c6b1a7556d3f5b61fe25bf9b1da6946dafed11ff2",
+        "references/patterns/serializers.md": "0e9f7e8775c9f9b45fc55dfe10f7f7ee3c0990e40a583907a0b656e755f532c7",
+        "references/patterns/service-objects.md": "16e84a2075f4a4ad5979edda14a793c0f18fda3e2e09ef3ed833b1ee9746692d",
+        "references/patterns/state-machines.md": "6c7ad2d9f16e96fbe63ad205061718e2311a53d8f03077bd413229427da32f86",
+        "references/patterns/value-objects.md": "9ed3e9ee7182fd32ae0272ec92136965ca8f4ddad5ff1c2ae0a38d5e02c49fc0",
+        "references/topics/ai-integration.md": "8e0ec3446f0383af4b13db031b80ae5395e3db52fe6a5e23437b3821d479156f",
+        "references/topics/authorization.md": "774aa7ffa207874020740b6eee765b07c2646f91daff05c6fbe56855dd5e623b",
+        "references/topics/callbacks.md": "01b1733fc1d06f53e2fc6be6cf46b1cd55e72e93db45f06be6cb010cdf04ff4f",
+        "references/topics/configuration.md": "afde2f9d48d71ccb1530467e598e83a5a5647012ebdfdd3d5cea0b3db0d47cd4",
+        "references/topics/current-attributes.md": "78e6c586d60366e14ade374bf3d9fbfb6b025b53d5a44dca8925ef9c3b000289",
+        "references/topics/instrumentation.md": "068908e58b0887cd47fbc8390a13db933f4add2830b8d826f2f042a9e1394694",
+        "references/topics/notifications.md": "24aefa810677a746e1683f7e2209548f1d2f184f085764a03416b794bdfd1127",
+        "references/topics/view-components.md": "2776d46b97335bc98ce4ce092f62402bb14e9f788be393c39bd74ba2be4e9558",
+        "workflows/analyze-callbacks.md": "505bc54615676161d274f1e4ac86ae8661216927670594876c18a82ba545e7f2",
+        "workflows/analyze-gods.md": "bc3b466244c0cdc775a333b400ee522d2aa7317f0da0fefc26876954b585e05f",
+        "workflows/analyze-services.md": "cfdc067bf6dbafddd772120dc6a986350496732b8b13d9940641aad0c706b5fb",
+        "workflows/analyze.md": "ebd525bc74098f7fd2a3892c9f3164a30055a9f825692d11e9b9c4f97b321662",
+        "workflows/archspec.md": "88027671b55230504bde4cc90e432d03c2412df3f1435698f939151bddd57ab3",
+        "workflows/plan.md": "2ccad2e850b89938af805ba212329bdde0b7d2355c503518dde2d3df861c43e9",
+        "workflows/review.md": "e575f38efae31e723d98284f7fbe1b7a5f47ed2b248a9baf13fe8177d7a98b77",
+        "workflows/spec-test.md": "689f9e7ba1df0084c6893dcd2d219e15f63c451a1bb28037a46c67e744307892"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "examples/authorization-to-policy.md": "examples/authorization-to-policy.md",
+        "examples/callbacks-to-service.md": "examples/callbacks-to-service.md",
+        "examples/complex-input-to-form-object.md": "examples/complex-input-to-form-object.md",
+        "examples/current-from-model.md": "examples/current-from-model.md",
+        "examples/god-object-decomposition.md": "examples/god-object-decomposition.md",
+        "examples/implicit-to-explicit-state-machine.md": "examples/implicit-to-explicit-state-machine.md",
+        "examples/query-to-query-object.md": "examples/query-to-query-object.md",
+        "examples/view-logic-to-presenter.md": "examples/view-logic-to-presenter.md",
+        "references/anti-patterns/callbacks.md": "references/anti-patterns/callbacks.md",
+        "references/anti-patterns/concerns.md": "references/anti-patterns/concerns.md",
+        "references/anti-patterns/helpers.md": "references/anti-patterns/helpers.md",
+        "references/anti-patterns/jobs.md": "references/anti-patterns/jobs.md",
+        "references/anti-patterns/layer-violations.md": "references/anti-patterns/layer-violations.md",
+        "references/anti-patterns/service-objects.md": "references/anti-patterns/service-objects.md",
+        "references/anti-patterns/testing.md": "references/anti-patterns/testing.md",
+        "references/core/architecture-layers.md": "references/core/architecture-layers.md",
+        "references/core/extraction-signals.md": "references/core/extraction-signals.md",
+        "references/core/specification-test.md": "references/core/specification-test.md",
+        "references/gems/action-policy.md": "references/mechanisms/policy-functions.md",
+        "references/gems/active-agent.md": "references/mechanisms/ai-provider-boundary.md",
+        "references/gems/active-delivery.md": "references/mechanisms/delivery-ports.md",
+        "references/gems/active-job-performs.md": "references/mechanisms/worker-entrypoints.md",
+        "references/gems/alba.md": "references/mechanisms/json-dtos.md",
+        "references/gems/anyway-config.md": "references/mechanisms/typed-config.md",
+        "references/gems/archspec.md": "references/mechanisms/import-boundaries.md",
+        "references/gems/rubanok.md": "references/mechanisms/typed-filters.md",
+        "references/gems/view-component.md": "references/mechanisms/react-components.md",
+        "references/gems/workflow.md": "references/mechanisms/explicit-state-machines.md",
+        "references/patterns/collaborator-objects.md": "references/patterns/collaborator-objects.md",
+        "references/patterns/concerns.md": "references/patterns/concerns.md",
+        "references/patterns/filter-objects.md": "references/patterns/filter-objects.md",
+        "references/patterns/form-objects.md": "references/patterns/form-objects.md",
+        "references/patterns/policy-objects.md": "references/patterns/policy-objects.md",
+        "references/patterns/presenters.md": "references/patterns/presenters.md",
+        "references/patterns/query-objects.md": "references/patterns/query-objects.md",
+        "references/patterns/repositories.md": "references/patterns/repositories.md",
+        "references/patterns/serializers.md": "references/patterns/serializers.md",
+        "references/patterns/service-objects.md": "references/patterns/service-objects.md",
+        "references/patterns/state-machines.md": "references/patterns/state-machines.md",
+        "references/patterns/value-objects.md": "references/patterns/value-objects.md",
+        "references/topics/ai-integration.md": "references/topics/ai-integration.md",
+        "references/topics/authorization.md": "references/topics/authorization.md",
+        "references/topics/callbacks.md": "references/topics/callbacks.md",
+        "references/topics/configuration.md": "references/topics/configuration.md",
+        "references/topics/current-attributes.md": "references/topics/current-attributes.md",
+        "references/topics/instrumentation.md": "references/topics/instrumentation.md",
+        "references/topics/notifications.md": "references/topics/notifications.md",
+        "references/topics/view-components.md": "references/topics/view-components.md",
+        "workflows/analyze-callbacks.md": "workflows/analyze-callbacks.md",
+        "workflows/analyze-gods.md": "workflows/analyze-gods.md",
+        "workflows/analyze-services.md": "workflows/analyze-services.md",
+        "workflows/analyze.md": "workflows/analyze.md",
+        "workflows/archspec.md": "workflows/archspec.md",
+        "workflows/plan.md": "workflows/plan.md",
+        "workflows/review.md": "workflows/review.md",
+        "workflows/spec-test.md": "workflows/spec-test.md"
+      },
+      "files": {
+        "SKILL.md": "3c4754312efebd2bcf3bedf9106463b076a1fbcd8f1d38654cb7a1843cd9717f",
+        "examples/authorization-to-policy.md": "c5ab2deb34fb8d44c123898938df97315b1639306acdb74ceadb56bb15f16a6c",
+        "examples/callbacks-to-service.md": "f3fa80bdc199b2679696da70c6b8ac94e674c3574a2ac15b4a4e5fd433a994d7",
+        "examples/complex-input-to-form-object.md": "af3982e46cda8ec6de143e507fac3051a9043854e32becd30571e50287fd70ec",
+        "examples/current-from-model.md": "b7bf5d99b06b2ec62fc855b2b611f40e488ff2bd55a25a2780c32137e210c248",
+        "examples/god-object-decomposition.md": "aece5a4f5eafc8e527737baf5f621eda0c560549c15f4ed3a820f1e73f0388ee",
+        "examples/implicit-to-explicit-state-machine.md": "6c78a22388d41a089c488e10f6b8e79e454ba53268d3ca7306469fe710042340",
+        "examples/query-to-query-object.md": "3c15e96dd1b4afcbf091fb93ab24ae1f3fa6443f612bd9934e951de58857adf9",
+        "examples/view-logic-to-presenter.md": "87e7bdd792257a436008fd275fd0ce97d6a5e94fef42808618ff7f4fc7fdc5fd",
+        "references/anti-patterns/callbacks.md": "1a50c67b88b912036e9a4a96b6c815b8911debde1d9e287aa85c1225124ce349",
+        "references/anti-patterns/concerns.md": "0f1b552ce5c87e1c343e60324af40e1f2a48dd90fdc302493029b98b0f002eb0",
+        "references/anti-patterns/helpers.md": "d677555bf05d9a9381178ad70254bf5680e0bc68fe409702c1068a3edff115c7",
+        "references/anti-patterns/jobs.md": "49d54e2ae07627dc8b5851875d78b3a6c84710d46bcdf6bbb8408bb90c714255",
+        "references/anti-patterns/layer-violations.md": "f3e1c59b4949bfcb4f91446bf3749791f8d914aa080e4067dc4c3baacc26aafc",
+        "references/anti-patterns/service-objects.md": "9668b80fe2be1795d6bc36dc5ad21c1ce0f17cbe3db07cab74165349c25772c6",
+        "references/anti-patterns/testing.md": "e9a6a329ed1eebc12936a45d856734c98da00bee57e24bf42cd74cc66157d4fb",
+        "references/core/architecture-layers.md": "be7871eb0712e943b47bb4492d727da03666f54f9b52f600d59b7c6c89ac4024",
+        "references/core/extraction-signals.md": "fd5ed4d1c23f8672639a64f61a44973edba29e6ad39437d042dd4a7d048fff96",
+        "references/core/specification-test.md": "e9ac637ce1eba8e44826281a9c82da4e288b70c45726adae6298b8593a6f6db7",
+        "references/go-sources.md": "45a9584d6e45b3a1464695a4abae19ab8a7ed34d562121bf458901ce58832c0f",
+        "references/mechanisms/ai-provider-boundary.md": "8e220f4040706647e840c0f8ae55551d6f640503ba0efd7548277538764110d6",
+        "references/mechanisms/delivery-ports.md": "c3d9a5a0fa733d45af0cbaf34d4d31e4a912abc6cf7dabe233186de6e5896420",
+        "references/mechanisms/explicit-state-machines.md": "e9f4907d4d393dbb21c502917815159d2c638570221a43b1147137c0062cdbc3",
+        "references/mechanisms/import-boundaries.md": "6eb9a56440a3839b97db9b97c1092b5c337029cb3078753e61ea254ac7145a49",
+        "references/mechanisms/json-dtos.md": "c3fe2b696cb5205974441a913341becadfe7112bbc0fb6b3159324e4e2934d73",
+        "references/mechanisms/policy-functions.md": "b53dbd6406e6f9183db53ab3543e43c54eb63ac289d593fd799987aa27adef46",
+        "references/mechanisms/react-components.md": "c7cb2cf947dc2c4c6a379753d7431bd65407acfe9c8ccc1adc18bd5b8ff17af5",
+        "references/mechanisms/typed-config.md": "aeeb11a673acee6f131bce7956d01d0a0e8692a833a735170e6a929aa8d4f44c",
+        "references/mechanisms/typed-filters.md": "1f7c050cc1b265d222109d527b480b2cee3bbdd3180a6b26f8ae6c3c4e02bfae",
+        "references/mechanisms/worker-entrypoints.md": "b0707e64ba464491b053d85fb5d9bdcb0c596712a32dac2dc0ab96d023bc6c83",
+        "references/patterns/collaborator-objects.md": "aa84139370f222c3eaf0b7e3ac3b9a21710a2ad63dad4f81232402aed6d5d1c4",
+        "references/patterns/concerns.md": "d9e4cdd2ae41db3914dbea518903dc79e13845f63c9d9fbae0f521250cf940e7",
+        "references/patterns/filter-objects.md": "f67b4c40f3e272a699fecfb93314d34da8a4a79661aba9b4f36ef0889c3dc4eb",
+        "references/patterns/form-objects.md": "7be4c59f6bea48715f44b0e8dc810188e79a53111b5020628d5a8cdd7fa00aec",
+        "references/patterns/policy-objects.md": "567630b49e77e78df7e01bc5080766cb4a85f31afb03c9b9aeb4d31159bb1f60",
+        "references/patterns/presenters.md": "df611cea6a160c6314c6c57de02d27ed05d4f5b0775b06e7a139b8352f85f8d7",
+        "references/patterns/query-objects.md": "b54daeeb2e56d9b548e2b9e186b2cdd1cc2a9860c5ed6596307c6bf98beaea76",
+        "references/patterns/repositories.md": "fb79bdcc6d3028cbd501db0b343d5c56470272ca731035f12857bf0a8f41f248",
+        "references/patterns/serializers.md": "f38f270df6fbc8c1313ea0741428790c67a38fa5ebf78aa73e330f9fc52e8aee",
+        "references/patterns/service-objects.md": "3a184eb1fb25fe4195e70c3a117c8e9eb2cdd34b331c83daf289f77bb419ac03",
+        "references/patterns/state-machines.md": "1a3a26841cda26ff5d9615fdeca1d0ca32cdb72e027401111b50ee7b6bb416f7",
+        "references/patterns/value-objects.md": "771df525d1788e0667281fd2b78dd7f7bbbbb74ac69769f4af08c533c0810e2a",
+        "references/topics/ai-integration.md": "509b669e8b1559ee4c59845dc1719cfa3c58aedaf7ba496d676b044316bf824c",
+        "references/topics/authorization.md": "9d701738cfac07391ce1bb6b80046fae45a30b291105ba7083715fb1a778775d",
+        "references/topics/callbacks.md": "532f6ae28bc0dce1238359d50b016b1f8d01b5d918f41a45fd3f1c50d666d78f",
+        "references/topics/configuration.md": "626a542250e16dc5bd4c4f50bda64701bbe7f0a30885ee375a5a53072d5efde4",
+        "references/topics/current-attributes.md": "71da40c45d16d0b750cd778224b39df5d9d530c13d6a26daff19dbff03db6b4f",
+        "references/topics/instrumentation.md": "6678982a881948a41ad2b1b6941ca770652153591f84d342abe4d95660311374",
+        "references/topics/notifications.md": "57bd26f8c1d2c87d6c19d0263de947bd6ffb2a629bc403abf553773256868423",
+        "references/topics/view-components.md": "990305098f66a8fe8f8006faf31c596400f2a57986c3a2ac06e8ba46205e2b39",
+        "workflows/analyze-callbacks.md": "c9465b471541983f8cfa140f8251ac702703421bf4c950da3118ebad9c747be7",
+        "workflows/analyze-gods.md": "0bbf6f3413e54d5417dc689de44d46660ecf860e039b7a8a600017bcd2a6b54e",
+        "workflows/analyze-services.md": "da1bc2ba14dfe6f3c4813d15d9dcdb3ee49ae6584cd3820f0bc91f523104fdfb",
+        "workflows/analyze.md": "3d5d3f424c62e77e3915c11ae9da636b83cbd3d2d5924947fb2836827e530b5d",
+        "workflows/archspec.md": "b1cb3ad131edca830b4e3d4ea3c3dbefa3d460e0bcad620b2497a06082f72a14",
+        "workflows/plan.md": "34c2efbd21bd6186038d07b9089a7fc2280b0c3bd361fd6e85d74d31a5210cf7",
+        "workflows/review.md": "bb73191b9cbf9ace436551f455638af0c316259caa7a9b0c0f5d1c30f279923a",
+        "workflows/spec-test.md": "e4a198029dd7464eb1adaac89bc9a41324212d305575733ddcc9ec4b873b3b53"
+      }
+    },
+    {
+      "name": "llms-visibility",
+      "description": "Make a site readable to ChatGPT, Claude, Perplexity, and the coding agents that fetch URLs: Markdown routes, Accept content negotiation, llms.txt, and crawler signals in robots.txt. Pushes back on the AI-SEO advice we tested and found useless.",
+      "type": "skill-md",
+      "url": "https://evilmartians.com/agent-skills/llms-visibility/SKILL.md",
+      "digest": "sha256:aebabc7f566f9014359414190193d7bb33d07d2f60ed916252e0332076433ee6",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "aebabc7f566f9014359414190193d7bb33d07d2f60ed916252e0332076433ee6"
+      }
+    },
+    {
+      "name": "sb-audit",
+      "description": "Periodic Storybook audit — naming-drift survey, archived/decision-board review, lifecycle tagging, usage refresh. Use for 'audit my Storybook', 'find drift', 'show pending decisions', or a periodic catalog health check.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-audit.tar.gz",
+      "digest": "sha256:7260409f5893826f6874bf0730a630846fca0625183a9c9eb151aef5384e5e3e",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "c6995d6e1bcd7640828b5531b1586ccae0004e9ed8d47c656925c5288cbf654b",
+        "agents/openai.yaml": "07cc20bbec7ac9e13258df23b5fb393b8e04f38e67968fa03525e980a7409da5",
+        "references/anti-patterns.md": "5f481cc99eb69daa7bede81720ffdf3ce24ca50f9024499492358ea21bf91525",
+        "references/galleries-and-tags.md": "39b6829a428b9f575fa9f3e808cf1e2b04891207e102f184ac0e16b7fb3e64ee",
+        "references/lifecycle-tags.md": "9e49ecd4a93379483aa091eb02fa829c575e37b2b4bcb10fae3526037beb4611",
+        "references/propagate-workflow.md": "82b24ef0b8f1caf089a18295508ed0487bf80c69f859dd671da86a65460a7bfa",
+        "scripts/audit-archived.sh": "a7d4fb3efa81d04c8c7033eb12b68e06482e6b42b99c7d7052693d9099cd611f",
+        "scripts/audit-controls.sh": "4129bae9214a48617bd61d80228e20e255bb0fa90b0031c865639509323a9bf6",
+        "scripts/audit-drift.sh": "ff1a4ce5097acf0269dc58e77d94c786ef72179c365c7911bfb54b2b57ec1def",
+        "scripts/extract-component-usage.sh": "3813e92a0567629ed717420725e8feb17bd919a7c392017e7da8ec986a51843c",
+        "scripts/find-stories-by-tag.sh": "890695b3fdac029381885165327f5ad3d49a812280437eb0d40836d5a6f2ddbf",
+        "scripts/prune-to-ledger.sh": "b2aa07c169e96c2dfc1c578421fbebfa1393a093859d141c5103a21de68918af",
+        "scripts/refresh-usage.sh": "3c294a33691e0304ec02d6eab2d63b9943e6e2e4b8556303d6cc312040f27d70",
+        "templates/design-decisions.md": "6cd4d385f710cfc0f0c014cff07092853489f613063bd8fa89a22af052a3097d"
+      }
+    },
+    {
+      "name": "sb-explore",
+      "description": "Iterate on a new or redesigned component in a sandboxed Explore story outside src/components/ (+ Figma), checked against a graduation gate. Use for 'prototype this', 'try a v2', 'explore from Figma', or net-new UI not ready to ship.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-explore.tar.gz",
+      "digest": "sha256:30e71119822354f236863f14081d01f6986a3615f633c4fc83aa2dacfd46193a",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "ddb5cbf24803c11fef4b114ad7d0bcd7538bb2f39cc7ddae42c76615d2a5c04f",
+        "agents/openai.yaml": "5cb3b09f9b4428718df9081b1e38fd57ef217b26aee42da27c4f3a2bcd1a28fb",
+        "references/figma-to-storybook.md": "76c4daac2dcac804de18a7d92610e66fc4bd1cdfb78250667a46188b160db550",
+        "references/labs-workflow.md": "23ed05f276f978fb073a954d93943bf028352c9f6cf597714bb7623eab57792d"
+      }
+    },
+    {
+      "name": "sb-figma",
+      "description": "The Figma↔Storybook bridge, both directions, via the native Figma MCP. design→code: map foundation tokens (color/spacing/type) from Figma variables with design↔code parity + drift, and deliver approved Figma components (extract → build → embed), authoring stories via sb-stories' rules. code→design: build Code Connect mappings from components + stories + token parity + usage so Figma Dev Mode shows the real code. Use for 'sync my Figma tokens', 'map Figma variables to my design system', 'deliver this approved Figma design', 'check design↔code token parity', 'connect my components to Figma / code connect'. NOT for prototyping/iterating an undecided design (that's sb-explore).",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-figma.tar.gz",
+      "digest": "sha256:2c9988c1e4a975917dca9ade8e0b1ff00da1a94a507e34764821816f899f715a",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "383fa46f862cf838886898f48131bded42c23b5baddb34638cd0d9e200693187",
+        "agents/openai.yaml": "ebe7581c0739953253f2028af241734b25d64719241af43409d51a0c7db27f70",
+        "decorators/withLayoutFrame.tsx": "24f4b6ae6f1b36088ec4dba65254f3fc073d358431a287ee58fb347c74036a22",
+        "references/figma-token-sync.md": "8e0e85661d870b0abc636272ac046f7143c5b31fd0f4c0a3601e4fcbe8c7ce33",
+        "scripts/build-code-connect.mjs": "316c3e6861c221e041fc204a1ea1dfcec9dce8b44ce7f61bb476a3c919b6d6de",
+        "scripts/build-token-parity.mjs": "e767516e5eb825ac8a73d6408250c604a3457a5bacf793d0a5c4b23996dbf06a",
+        "scripts/capture-figma.mjs": "5ffd452fb7befec1d8f877b340f5e11d521f0e8d73290a5804c36d49a85e4228",
+        "scripts/pull-figma-variables.mjs": "06830dab73a062cd97cbadf9b6bb1482131f670b9fdab786a614502de3a2e411",
+        "scripts/record-figma-delivery.py": "77e4250acccd6fb169155702a48cb2a57f1d33bf91fdce9c460e812247ed69ee",
+        "templates/figma-inventory.stories.tsx": "7129fa8e1b7b2d4361cf572001e58455c8123f9a5fc49c29639d307f7a6c4d03",
+        "wrappers/FigmaInventory.tsx": "6fb56ac88b46323eacde8c11a0b065de1f5ded80ec98d2f09da49c5c8f6a7473",
+        "wrappers/ReportIntro.tsx": "61870f4ffb2da49875eaf2877093a1658c6981bb848a2fb23f1c611203fd7a07",
+        "wrappers/TokenMatrix.tsx": "95d82ab58d943a9d675dc9132416bd00835562d0fc99b436ce89c4078e939d4e",
+        "wrappers/TokensCanvas.tsx": "d05df2373d6e7ea3c69cb31224b7290bd6937f56e050609c533f75018d9fcc32",
+        "wrappers/icons.tsx": "f557b983767312130229692c19e776d656e8aa43ef908a3afe3f335ddbd0700d",
+        "wrappers/resolve-paint.ts": "68cfe2e7f71ffeff68ced3d70bdf1debb91c89705a487688eeb657ea56ef5abf",
+        "wrappers/usage-index.tsx": "1fb6b2d911dbd242721214d6fc89a68499c6e2efb83dfceb6275394bf2c6701f",
+        "wrappers/usage-stamp.tsx": "105e3c2edcbe9cddfb8b635d41cf35ed798e4a202d6a545b0e719172b7b5140f"
+      }
+    },
+    {
+      "name": "sb-flows",
+      "description": "Map the whole app — routes, navigation edges, and persistent nav chrome, not just a screen list. Use for 'map the app', 'show the flow', 'app map', 'audit navigation', or 'how do screens connect'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-flows.tar.gz",
+      "digest": "sha256:ef8f00cc8bc2cd2003bbb085d5f85ba20d442db409db32a15aadd137eb77b3e1",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "750ab21d5136326b4e483971caed0b5c5a764c30f65b5b24fb9e7ac4fcf8a024",
+        "agents/openai.yaml": "544dd9e9f32d34b342916293aecbd61b7590f75d60f6f46251f3886403cf2730",
+        "decorators/withLayoutFrame.tsx": "24f4b6ae6f1b36088ec4dba65254f3fc073d358431a287ee58fb347c74036a22",
+        "references/flow-capture.md": "a7d8290329e3993a29d11a1f4d338bdad1cae48b3c0a32425fe4018294a29837",
+        "scripts/extract-flows.sh": "f968bd4f22bb6f0599cbba2bf135fd91702112e2793d4dd7681770cac598c9b2",
+        "scripts/scaffold-wrapper.sh": "8e28f932e5664d0fb0a40c4e8b0ff476a2373621675889f1b19766995fe70ada",
+        "templates/extract-app-graph.mjs": "7b2d3c9afc7d7fdef43bfb689ecdd78931676b8b12ccc7d8bb7eeac510fd2823",
+        "wrappers/AppFlowGraph.tsx": "aee57843f865aecfc355a056f67f2d06f92d519d7c307a6f57fed877b173c08f",
+        "wrappers/JourneyGraph.tsx": "dc10bf7d79b32f3f29b1edefcbccf7ea50aa538fbc8bbc47d47da1dca29a8cd6",
+        "wrappers/ReportIntro.tsx": "61870f4ffb2da49875eaf2877093a1658c6981bb848a2fb23f1c611203fd7a07",
+        "wrappers/icons.tsx": "f557b983767312130229692c19e776d656e8aa43ef908a3afe3f335ddbd0700d",
+        "wrappers/resolve-paint.ts": "68cfe2e7f71ffeff68ced3d70bdf1debb91c89705a487688eeb657ea56ef5abf",
+        "wrappers/usage-index.tsx": "1fb6b2d911dbd242721214d6fc89a68499c6e2efb83dfceb6275394bf2c6701f",
+        "wrappers/usage-stamp.tsx": "105e3c2edcbe9cddfb8b635d41cf35ed798e4a202d6a545b0e719172b7b5140f"
+      }
+    },
+    {
+      "name": "sb-health",
+      "description": "Check design-system health for a React+Vite app — raw hex, undefined/unused tokens, scale gaps, DESIGN.md drift, and (opt-in) property→token-family misuse. Use for 'is my design system healthy', 'find raw colors', 'check tokens', or a mixed design system.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-health.tar.gz",
+      "digest": "sha256:b60ed4701439022f74afc3d656be400b7cae5d484ae9751a02538a1c8a1a305d",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "9792814d5f605f4090ecee93776dbeb3236a0b1f0418fdf47997eedbe755978b",
+        "agents/openai.yaml": "7c6126f41db7196ef0ebccfbb759d1c31f323424f2277b5c1d83258223457e58",
+        "decorators/withLayoutFrame.tsx": "24f4b6ae6f1b36088ec4dba65254f3fc073d358431a287ee58fb347c74036a22",
+        "references/colors.example.json": "56339ebd2140180c023385278e389140e8243054a7574acf7c963f57ab73ca1d",
+        "references/colors.schema.json": "afcbf05770f1e1a260e44c6adc76d2727d486b6d789879ad55cdabd1cc0efccd",
+        "scripts/check-property-tokens.py": "3161a2a4fab592bf8f06c53dfb64ae81ad30e5af8ab859ad72842618fd1bf6ef",
+        "scripts/scaffold-wrapper.sh": "8e28f932e5664d0fb0a40c4e8b0ff476a2373621675889f1b19766995fe70ada",
+        "scripts/validate-design-system.sh": "a7f13150e19332c9d9eba63150410654a96152cc9bf4a6af8ad7084b0565f18b",
+        "wrappers/DesignSystemHealth.tsx": "f4dd43fb74afb1b40f2d2ef080618d04307e373211ecdffc8b722b336773eecc",
+        "wrappers/ReportIntro.tsx": "61870f4ffb2da49875eaf2877093a1658c6981bb848a2fb23f1c611203fd7a07",
+        "wrappers/icons.tsx": "f557b983767312130229692c19e776d656e8aa43ef908a3afe3f335ddbd0700d",
+        "wrappers/resolve-paint.ts": "68cfe2e7f71ffeff68ced3d70bdf1debb91c89705a487688eeb657ea56ef5abf",
+        "wrappers/usage-index.tsx": "1fb6b2d911dbd242721214d6fc89a68499c6e2efb83dfceb6275394bf2c6701f",
+        "wrappers/usage-stamp.tsx": "105e3c2edcbe9cddfb8b635d41cf35ed798e4a202d6a545b0e719172b7b5140f"
+      }
+    },
+    {
+      "name": "sb-hub",
+      "description": "Hub for the Storybook CSF3 bundle — diagnose a repo, orchestrate the audit→stories pipeline, or name the next sb-* step. Use for 'set up Storybook', 'audit my app', 'where do I start', 'what's next'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-hub.tar.gz",
+      "digest": "sha256:5cc90a4eab3239a6f6798ff17e414df872092ba2132cd3104caf022dda89c7cb",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "facd17bc8305a79940b39cb48b28dc6c150f3b4689102ef5eca8843bfbcebb11",
+        "agents/openai.yaml": "1441bd4d3a92fe4e6724c5cd64a6179d5a743865091e27aaa88bc6b4a84179d6",
+        "references/end-to-end-flow.md": "6bc094bb78fe77663be928b218ab59406f40c413b9b5a14499e30e0f9a6df758",
+        "references/runbook.md": "0dde82d8ae61217714b4d5ecc7ea45db318e887cbcca2c39e23ddb8c335630c5",
+        "scripts/report-issue.sh": "0b65d3a1160c06ee3bc583edecb86d76e40a961538c5f8795a63950e8ff4c2de"
+      }
+    },
+    {
+      "name": "sb-inventory",
+      "description": "Audit a React+Vite app for real-vs-slop components (by actual imports), the dominant design system, and real prop-value usage at call sites. Use for 'what components do I have', 'which are dead', 'audit this vibe-coded app'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-inventory.tar.gz",
+      "digest": "sha256:fd5e814a62871e82f6e43d0a9709deef25fb84973c3a01fbc16b3582aa8a0fc0",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "1f70bb852bd9a1df00a9565c2310dbd79bf9e2ad5a90df16bb8a29df2bfaf8a2",
+        "agents/openai.yaml": "032e7f4daf4ea896f149b1ebb6cdadbb231f40250212c643ac768b96e4485de0",
+        "decorators/withLayoutFrame.tsx": "24f4b6ae6f1b36088ec4dba65254f3fc073d358431a287ee58fb347c74036a22",
+        "references/field-learnings.md": "96cb6f45e79870dee3eb798cefd3075f70236152647905b4403c4e09a5f90fba",
+        "scripts/build-component-pages.py": "f65658099e835a274766c205a5ffc3ccc527063add6051d434122d26f1b1f683",
+        "scripts/extract-component-usage.sh": "3813e92a0567629ed717420725e8feb17bd919a7c392017e7da8ec986a51843c",
+        "scripts/inventory-project.sh": "edbbff369977cbb86686d54a06d616f298ca00d25547cddb83a624d3012690b6",
+        "scripts/refresh-usage.sh": "3c294a33691e0304ec02d6eab2d63b9943e6e2e4b8556303d6cc312040f27d70",
+        "scripts/scaffold-usage-mdx.py": "d204622b64b1a62af08f9ec79a1cc586388930682d81d37fd5c91902bd1dfc40",
+        "scripts/scaffold-wrapper.sh": "8e28f932e5664d0fb0a40c4e8b0ff476a2373621675889f1b19766995fe70ada",
+        "scripts/token-usage.py": "1b80bd5bafce12dbab533eddf35daa94186ac59b86c540818a551b0e151a13b3",
+        "templates/usage-profile.mdx": "0fde2258a0a5c12e5ccbc35999c6b04316f923c80bb3f29461d003ff854c665e",
+        "wrappers/ComponentUsage.tsx": "8eb3c95af5b086e0fd1460210d49805d32cf1b0252d35fbc09aea003bffc6496",
+        "wrappers/ProjectInventory.tsx": "cf3128dbfbdbd66a1096d1805c4c414d6a237f757ea2556b8656bef3b2e45996",
+        "wrappers/ReportIntro.tsx": "61870f4ffb2da49875eaf2877093a1658c6981bb848a2fb23f1c611203fd7a07",
+        "wrappers/icons.tsx": "f557b983767312130229692c19e776d656e8aa43ef908a3afe3f335ddbd0700d",
+        "wrappers/resolve-paint.ts": "68cfe2e7f71ffeff68ced3d70bdf1debb91c89705a487688eeb657ea56ef5abf",
+        "wrappers/usage-index.tsx": "1fb6b2d911dbd242721214d6fc89a68499c6e2efb83dfceb6275394bf2c6701f",
+        "wrappers/usage-stamp.tsx": "105e3c2edcbe9cddfb8b635d41cf35ed798e4a202d6a545b0e719172b7b5140f"
+      }
+    },
+    {
+      "name": "sb-setup",
+      "description": "Set up Storybook on a React+Vite app that has none — defer to `npx storybook ai setup`, then align viteFinal/providers/MCP and ask where stories live. Use for 'set up Storybook', 'install Storybook', or NO_STORYBOOK.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-setup.tar.gz",
+      "digest": "sha256:97c3b2dd02cd08ecf4daa12429f38e424cf59492a22dd09709df6501774e58cd",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "ae8e5b5d52eef447fcc3da8bdad318f748640431c648ca29f2871c02d2add5b4",
+        "agents/openai.yaml": "892e0876f01a2bac7f3757f607a7ae5bfcec5c466a8967ff6191dd8190e0c9c0",
+        "references/install-wizard.md": "b63b67b191f0197abc17766600b38969b1096e23b6de3425e590fdccb95957a9",
+        "references/native-ai-setup-prompt.md": "af91284a0a51a076cce8043f26144679be18df0cc8e053c678c8aea8ab4d9f7a",
+        "scripts/discover-runtime.py": "0db6a6b4e9305d00cc8c28c8d3d36f22824066ae88c6b0f9bad13d4a020a834d"
+      }
+    },
+    {
+      "name": "sb-ship",
+      "description": "Graduate ONE Explore experiment to a production component — preserve the experiment (cp, never git mv), pick new-vs-update, close the decision loop. Use for 'ship this', 'promote this experiment', 'graduate to production'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-ship.tar.gz",
+      "digest": "sha256:517cdcdff08f68a89c24e8ab399dfcbb90e1e227fc36b9852580b1362dccafb7",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "5c83716e2fdf5a382908ba0a2ebcedf1a3a73c6d7d3973e7f714231a8246663d",
+        "agents/openai.yaml": "db08d58548acf91b2e7b84496128ef80d8f809e157cb95c3ac65b4a35717cf6c",
+        "references/propagate-workflow.md": "82b24ef0b8f1caf089a18295508ed0487bf80c69f859dd671da86a65460a7bfa",
+        "scripts/find-stories-by-tag.sh": "890695b3fdac029381885165327f5ad3d49a812280437eb0d40836d5a6f2ddbf",
+        "scripts/validate-stories.sh": "039314dafe9110ceb2057beec459b320bf687ade8abdba6d49b43398c4f7ee23",
+        "templates/design-decisions.md": "6cd4d385f710cfc0f0c014cff07092853489f613063bd8fa89a22af052a3097d"
+      }
+    },
+    {
+      "name": "sb-stories",
+      "description": "Write a CSF3 story for ONE React component, covering only its materially-different states (no Cartesian), with a factory when 3+ stories share a shape. Use for 'write a story for X', 'document this component', 'add a Storybook story'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-stories.tar.gz",
+      "digest": "sha256:34af3bb2aa7d68718a52a28c5a31759d665d4001f129eaace33929b1828bbd57",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "5f73a9ea5084551ba7bbd576d456e959853935248ce692c8d97f3d1d09b3befd",
+        "agents/openai.yaml": "133ac4919d3667db958b77b5761008938e8a270e0e62129121f58003cf36d1f7",
+        "references/anti-patterns.md": "5f481cc99eb69daa7bede81720ffdf3ce24ca50f9024499492358ea21bf91525",
+        "references/composition-patterns.md": "9581d39bd8a38721613b3a9bc6344444dbcdf2cc44b09848d8fb77ac7f559a7c",
+        "references/directory-structure.md": "d411ef723bbd9e38e85c9cd6548db09db3f8064ad8dbef4d9cc978296d3562fb",
+        "references/extraction-workflow.md": "c5f34a44c5f24a57eae453cd080838776b2e348027e2be8b8a2bbbe978421b31",
+        "references/factory-patterns.md": "b4da8d0f19362a3aa45d3a49f5f2a3b034065308532d442ab03f18adc13c1405",
+        "references/test-wiring.md": "9096b05bf41051160b209af05563b9209788c3495c073f019562df81c56301ca",
+        "references/validate-workflow.md": "f97dde9e2a99eb177bd46eba22ec157e2368aab802e5a1ed7a23dcd72d856e32",
+        "references/with-mcp.md": "d48261a8aceb18003001fb8e23a042aeccf58bc3599c9747ad55a37112bdfd9a",
+        "references/without-mcp.md": "cea182c7334f8e02c3f24bd86af5a6a54925c5a9d99b97cf4066f28814b988d9",
+        "scripts/check-story-ready.sh": "32d102353fb8cc19abc17e23f609e48ded4ff5a06fdea8f26190f2c0019de282",
+        "scripts/discover-runtime.py": "0db6a6b4e9305d00cc8c28c8d3d36f22824066ae88c6b0f9bad13d4a020a834d",
+        "scripts/extract-prop-shapes.sh": "a480d119bbef4c21f3058c666d01b40d4a61a6d146326941e531b0944eb97680",
+        "scripts/extract-states.sh": "52fd91a4fe25e478fb85f69888cdd459f675fcc288e8f5976cb2e8c8d6dba959",
+        "scripts/page-patterns.py": "ab142c0296d3ca37a6d4a3a06475c4bea1efff3154a505e9e483d5008ce83f7c",
+        "scripts/scaffold-factory.sh": "c8475f5e101c82ef1c39a30bfb4efe35430eb7fe62feaa8a40e8b69af3fdc9d5",
+        "scripts/scaffold-page-story.py": "a7b6eaa2ff0f67a91fc830b8ca820081829e55805d8aead99c0d3fa718a5ee0b",
+        "scripts/validate-stories.sh": "039314dafe9110ceb2057beec459b320bf687ade8abdba6d49b43398c4f7ee23",
+        "templates/controlled-component-story.tsx": "a6a71de16375bcff01aeb20e482b056c2fe465b2f35cb548f01228d3b4a210d0"
+      }
+    },
+    {
+      "name": "sb-wrappers",
+      "description": "Scaffold a Storybook-only wrapper — ABCanvas, StateGrid, AppFlowGraph, ProjectInventory, and more. Use for 'compare two designs', 'every state on one canvas', 'the full flow', 'track this decision', or 'scaffold wrappers'.",
+      "type": "archive",
+      "url": "https://evilmartians.com/agent-skills/sb-wrappers.tar.gz",
+      "digest": "sha256:dfcb556cbde302bef438d6460ff3f8f06c5e40062831c474d10151d661f5c4b3",
+      "mode": "upstream",
+      "files": {
+        "CONTEXT.md": "9a81e408d281702ea354cffc6699d17f68495ba42407635b3de01ada192ebb03",
+        "SKILL.md": "a43d3c18bd2e1a508c7895ff4e6d13d78f131baa25dc4537ae5b00c3d2b7bd7a",
+        "agents/openai.yaml": "c688754f8607bca5572458d71478cbc5a1f8c60ea889d52aea59be0d41c9a517",
+        "decorators/withLayoutFrame.tsx": "24f4b6ae6f1b36088ec4dba65254f3fc073d358431a287ee58fb347c74036a22",
+        "references/composition-patterns.md": "9581d39bd8a38721613b3a9bc6344444dbcdf2cc44b09848d8fb77ac7f559a7c",
+        "references/wrapper-library.md": "1ddd4ef904eac688231221685409f73a93bfd143a48017dfc0abb19cd928bbb7",
+        "scripts/scaffold-wrapper.sh": "8e28f932e5664d0fb0a40c4e8b0ff476a2373621675889f1b19766995fe70ada",
+        "wrappers/ABCanvas.tsx": "cb583548812a9b034b67dd65187cf94e5125d4fbf3ac8126541f4ba2b23b8dab",
+        "wrappers/AppFlowGraph.tsx": "aee57843f865aecfc355a056f67f2d06f92d519d7c307a6f57fed877b173c08f",
+        "wrappers/ComponentContext.tsx": "08faf0891ada63f5de0664c38aa923577de162cc93c8a4134ca3666c92d7dd60",
+        "wrappers/ComponentUsage.tsx": "8eb3c95af5b086e0fd1460210d49805d32cf1b0252d35fbc09aea003bffc6496",
+        "wrappers/DecisionsDashboard.tsx": "6a1e5e04dabe0850da68ecdc317fc0bca5f321deae7791e5a629072ce79beddd",
+        "wrappers/DesignSystemHealth.tsx": "f4dd43fb74afb1b40f2d2ef080618d04307e373211ecdffc8b722b336773eecc",
+        "wrappers/FigmaInventory.tsx": "6fb56ac88b46323eacde8c11a0b065de1f5ded80ec98d2f09da49c5c8f6a7473",
+        "wrappers/IconMatrix.tsx": "c7e0e2c563ec05aed86a0ddb0bc361232113a8bfe4a1879b34a39b45d86a4789",
+        "wrappers/JourneyGraph.tsx": "dc10bf7d79b32f3f29b1edefcbccf7ea50aa538fbc8bbc47d47da1dca29a8cd6",
+        "wrappers/MotionStage.tsx": "c45f9f9d982460da50dd4c32a0b07ecd47d1a4c50e7c558ef8abebb46c73d8e9",
+        "wrappers/ProjectInventory.tsx": "cf3128dbfbdbd66a1096d1805c4c414d6a237f757ea2556b8656bef3b2e45996",
+        "wrappers/R3FCanvas.tsx": "8e751046dfbe8e73f7875c7234301556e3c491c213edbab40b1f5bbc4a32816a",
+        "wrappers/ReportIntro.tsx": "61870f4ffb2da49875eaf2877093a1658c6981bb848a2fb23f1c611203fd7a07",
+        "wrappers/ShaderCanvas.tsx": "7648be6fb8a72f40fb647b5977424eac5af122eaf83ca08d501dc523e005f44c",
+        "wrappers/StateGrid.tsx": "8bca9a05037ee7c64144caaa2df5ba70e1566314c707dfc77a54b264dd811b38",
+        "wrappers/StateMatrix.tsx": "527a05724bf73b57b7f1f8b1f379db2d1949deeb9262e8c0f996cdb774de329d",
+        "wrappers/StorySet.tsx": "3995cd99b27a568c4fa83e4c02ca7b682024c3a6af2a7d892b52c5362de7283f",
+        "wrappers/StoryStrip.tsx": "2cf55b5c6e2cdb97bedc8061c54c940059ddb27ff0492bb348f1fde991aa8e97",
+        "wrappers/TokenMatrix.tsx": "95d82ab58d943a9d675dc9132416bd00835562d0fc99b436ce89c4078e939d4e",
+        "wrappers/TokenUsageGrid.tsx": "a97744915113468e31e4a7fc38c8dd6af08a3cac6ddc0755773d450c4a9b55d9",
+        "wrappers/TokensCanvas.tsx": "d05df2373d6e7ea3c69cb31224b7290bd6937f56e050609c533f75018d9fcc32",
+        "wrappers/TrackedDecision.tsx": "44130ce95e31179d7bbbb910e14dffdfaa5549cef037fd3e9017a964e5eb272f",
+        "wrappers/UsageExplorer.tsx": "3886b27d13b7a8df7abd9a21863fe82cf08ef2226c4dc83ac027e62ccfb4068a",
+        "wrappers/UsageSection.tsx": "c9348f2287ba32435b9a8d131ec30c23f11261b199b666d84280e0319e7f0e61",
+        "wrappers/icons.tsx": "f557b983767312130229692c19e776d656e8aa43ef908a3afe3f335ddbd0700d",
+        "wrappers/index.ts": "37b2896886f480d19cb4ff85253d63a8ac99ea0a767803518f02f828d752d7b8",
+        "wrappers/resolve-paint.ts": "68cfe2e7f71ffeff68ced3d70bdf1debb91c89705a487688eeb657ea56ef5abf",
+        "wrappers/swatches.tsx": "89727ad037383924fe5284f4897cc9f113a5baeb97ff7e7e6689e913a6db9293",
+        "wrappers/usage-badge.tsx": "6d09218db99e6efb53cdc5412cf9de9c20ecc9a09129808f6ebf7933e9f20e07",
+        "wrappers/usage-index.tsx": "1fb6b2d911dbd242721214d6fc89a68499c6e2efb83dfceb6275394bf2c6701f",
+        "wrappers/usage-stamp.tsx": "105e3c2edcbe9cddfb8b635d41cf35ed798e4a202d6a545b0e719172b7b5140f"
+      }
+    },
+    {
+      "name": "secure-npm-package",
+      "description": "Release an npm package with no token left to steal: Trusted Publishing, provenance, and staged publishes from a single GitHub Actions workflow, plus click-by-click npmjs.com and GitHub settings with every URL resolved from your own package.json.",
+      "type": "skill-md",
+      "url": "https://evilmartians.com/agent-skills/secure-npm-package/SKILL.md",
+      "digest": "sha256:732f6f9f6272b408a42341ef4bfa8a2399a12f14e81b49a4fa19169a856e5036",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "732f6f9f6272b408a42341ef4bfa8a2399a12f14e81b49a4fa19169a856e5036"
+      }
+    },
+    {
+      "name": "shadcn-inertia",
+      "mode": "adapted",
+      "source": {
+        "repository": "https://github.com/serge-masiutin/rails-template",
+        "commit": "b65cac0ba54b7384f100c261203be557f969f6a7",
+        "path": "vendor/agent-skills/evilmartians/shadcn-inertia",
+        "name": "shadcn-inertia"
+      },
+      "archive": "third_party/skills/shadcn-inertia.source.tar.gz",
+      "archiveSha256": "0b9f2a6bde23900a2349d73080b7e2f1b6e29f98411652cf2f6b3935f20863eb",
+      "patch": "third_party/skills/shadcn-inertia.patch",
+      "patchSha256": "fc2207972c7048291fc0fcae293e9adc10f8720e5cb23799a39586d4e569ccd9",
+      "sourceFiles": {
+        "SKILL.md": "11e779f05ee42b03bc793e630c6b1a622744f211a6a6458d004e6c1e34a9fb3c",
+        "references/components.md": "50fda0aff626af794b6a396eb0d72ae9e06c0b2fb6568b60c7d3886a6e17b97c",
+        "references/flash-toast.md": "6f55d8485e04946695b6507c3d44f399eed97394c2b003682c109f3632b3a8bd"
+      },
+      "mapping": {
+        "SKILL.md": "SKILL.md",
+        "references/components.md": "references/components.md",
+        "references/flash-toast.md": "references/flash-toast.md"
+      },
+      "files": {
+        "SKILL.md": "9290901207d0e414606b09787eb9250e696062455b6d874412a379667d0e982e",
+        "references/components.md": "3ecfe68cc1199621ec9ca41ee6963129d96f20697ca82ac981efb984bb229172",
+        "references/flash-toast.md": "3fb55725daa1b6c8b49c58246bdf8ca5acfa1965df70edbe51556e750694c294"
+      }
+    },
+    {
+      "name": "skills-visibility",
+      "description": "Publish a catalog of agent skills and make it discoverable to AI coding agents: the .well-known/agent-skills/index.json index, integrity digests, single-file vs multi-file vs bundle packaging, and every install method. Pushes back on pointing the index at raw GitHub URLs instead of a domain you control.",
+      "type": "skill-md",
+      "url": "https://evilmartians.com/agent-skills/skills-visibility/SKILL.md",
+      "digest": "sha256:a84c34f42c71353eed94133accd2c39bad787d3603f7e9bf8ff56fb99cfc1241",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "a84c34f42c71353eed94133accd2c39bad787d3603f7e9bf8ff56fb99cfc1241"
+      }
+    },
+    {
+      "name": "tailwind-best-practices",
+      "description": "Writes and audits Tailwind CSS with the five practices that keep a fast-to-write codebase maintainable: design tokens over magic values, short and consistently ordered class lists, semantically grouped tokens, and fixed variants for design-system components instead of arbitrary className props.",
+      "type": "skill-md",
+      "url": "https://evilmartians.com/agent-skills/tailwind-best-practices/SKILL.md",
+      "digest": "sha256:27e8507dbaa212d4ffb770a8a989c6e9ecb45f0e37869796b33a05f80006bb40",
+      "mode": "upstream",
+      "files": {
+        "SKILL.md": "27e8507dbaa212d4ffb770a8a989c6e9ecb45f0e37869796b33a05f80006bb40"
+      }
+    }
+  ],
+  "reviewedAt": "2026-09-27"
+}

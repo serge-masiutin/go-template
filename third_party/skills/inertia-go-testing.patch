@@ -1,0 +1,280 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,176 +1,79 @@
+ ---
+-name: inertia-rails-testing
+-description: >-
+-  Testing Inertia Rails responses with RSpec and Minitest: component assertions, prop matching, flash verification,
+-  deferred props, and partial reload helpers. Use when writing controller specs, request specs, or integration tests
+-  for Inertia pages. ALWAYS use matchers (render_component, have_props, have_flash), NOT direct access
+-  (inertia.component, inertia.props). CRITICAL: after POST/PATCH/DELETE with redirect, MUST call follow_redirect!
+-  before asserting flash or props — without it you're asserting against the 302, not the Inertia page.
+-  Setup: require 'inertia_rails/rspec'.
++name: inertia-go-testing
++description: Test Go Inertia responses with testing, httptest, Gonertia assertions and PostgreSQL integration tests. Verify components, safe props, CSRF, redirect/flash lifecycle, partial/deferred loading and authorization.
+ ---
+ 
+-# Inertia Rails Testing
++## Go project contract
+ 
+-Testing patterns for Inertia responses with RSpec and Minitest.
++This is an adaptation of the original EM Inertia skill, preserving the React examples
++and decision workflow. Read `docs/architecture.md` and the actual Go handlers first.
++Use Gonertia v3 APIs from `go.mod`; server examples below replace the Rails adapter.
++All mutations carry `X-CSRF-Token` from `usePage().props.csrfToken`. The starter accepts
++strict JSON; uploads need a separate bounded multipart handler before using upload examples.
++Validation errors cross a 303 redirect through the session flash provider. They are not
++bare 422 JSON responses. Shared user data is request-scoped, never global `ShareProp`.
++Examples describe features to implement, not routes or libraries already installed.
+ 
+-**For each controller action, verify:**
+-- **Correct component** → `render_component('users/index')`
+-- **Expected props** → `have_props(users: satisfy { ... })`
+-- **No leaked data** → `have_no_prop(:secret)`
+-- **Flash messages** → `follow_redirect!` then `have_flash(notice: '...')`
+-- **Deferred props** → `have_deferred_props(:analytics)`
+ 
+-**Common mistake:** Forgetting `follow_redirect!` after PRG — without it, you're
+-asserting against the 302 redirect response, not the Inertia page that follows.
++# Inertia Go Testing
++
++Preserve the upstream request-level checks: component, props, absence of private data, flash after redirects, deferred metadata and partial reload behavior. Use Go's test stack instead of RSpec/Minitest.
+ 
+ ## Setup
+ 
+-```ruby
+-# spec/rails_helper.rb
+-require 'inertia_rails/rspec'
++Read `internal/httpapp/integration_test.go` and `docs/testing.md`. Integration tests exercise the real middleware/session/adapter stack with isolated PostgreSQL schemas. Browser tests exercise the built React client.
++
++## Assertions
++
++Gonertia v3 exports `AssertFromReader`, `AssertFromBytes`, `AssertComponent`, `AssertProps`, `AssertFlash`, `AssertDeferredProps`, `AssertMergeProps` and history assertions. Check the installed source before using another helper; do not invent Rails-style matchers.
++
++```go
++page := inertia.AssertFromBytes(t, responseBody)
++page.AssertComponent("Home")
+ ```
+ 
+-## RSpec Matchers
++For selective checks, decode a typed response or inspect known keys. `AssertProps` uses exact equality; JSON numbers decoded into `any` are float64. String IDs avoid precision loss. Exact public DTO key checks are useful for preventing leaks; avoid brittle equality on unrelated whole-page metadata.
+ 
+-| Matcher | Purpose |
+-|---------|---------|
+-| `be_inertia_response` | Verify response is Inertia format |
+-| `render_component('path')` | Check rendered component name |
+-| `have_props(key: value)` | Partial props match |
+-| `have_exact_props(key: value)` | Exact props match |
+-| `have_no_prop(:key)` | Assert prop absent |
+-| `have_flash(key: value)` | Partial flash match |
+-| `have_exact_flash(key: value)` | Exact flash match |
+-| `have_no_flash(:key)` | Assert flash absent |
+-| `have_deferred_props(:key)` | Check deferred props exist |
+-| `have_view_data(key: value)` | Partial view_data match |
++## Redirects and Flash
+ 
+-## RSpec Examples
++After POST/PATCH/DELETE, first assert 303 and a safe Location. Follow the GET with the same cookie jar, then assert validation/flash. Assert that one-time data is consumed. The redirect response itself has no rendered page props.
+ 
+-**ALWAYS use matchers** (`render_component`, `have_props`, `have_flash`) instead of
+-direct property access (`inertia.component`, `inertia.props[:key]`):
++## Shared Props
+ 
+-```ruby
+-# BAD — direct property access:
+-# expect(inertia.component).to eq('users/index')
+-# expect(inertia.props[:users].length).to eq(3)
++Verify CSRF is present on relevant page responses and private account fields are absent. Test two independent clients to detect cross-user shared state. Per-request values must not be globally shared on the Inertia engine.
+ 
+-# GOOD — use matchers:
+-expect(inertia).to render_component('users/index')
+-expect(inertia).to have_props(users: satisfy { |u| u.length == 3 })
+-```
++## Deferred Props
+ 
+-```ruby
+-# Key pattern: follow_redirect! after POST/PATCH/DELETE before asserting
+-it 'redirects with flash on success' do
+-  post users_path, params: { user: valid_params }
++On the initial response assert registration in `deferredProps` and absence of the deferred value. Send a second partial request and assert the value and query execution. Also revoke access between requests and verify the second request is denied.
+ 
+-  expect(response).to redirect_to(users_path)
+-  follow_redirect!
+-  expect(inertia).to have_flash(notice: 'User created!')
+-end
++## Partial Reloads
+ 
+-it 'returns validation errors on failure' do
+-  post users_path, params: { user: { name: '' } }
++Set `X-Inertia: true`, the current `X-Inertia-Version`, `X-Inertia-Partial-Component` and `X-Inertia-Partial-Data` (or `...-Except`) as appropriate. The component must match. Verify nonrequested expensive loaders do not run and required Always props remain.
+ 
+-  follow_redirect!
+-  expect(inertia).to have_props(errors: hash_including('name' => anything))
+-end
+-```
++A stale asset version intentionally returns 409 with `X-Inertia-Location`; a test that omits the version can accidentally test version negotiation rather than its handler.
+ 
+-### Test Shared Props
++## External Redirects
+ 
+-Shared props from `inertia_share` are included in `inertia.props`. The `inertia`
+-helper is available in `type: :request` specs after requiring `inertia_rails/rspec`:
++For an Inertia request, `engine.Location` returns 409 plus `X-Inertia-Location`. Verify the destination is server-owned or allowlisted. Test a normal browser visit separately when its behavior matters.
+ 
+-```ruby
+-it 'includes shared auth data' do
+-  sign_in(user)
+-  get dashboard_path
++## What to Test and Avoid
+ 
+-  expect(inertia).to have_props(
+-    auth: hash_including(user: hash_including(id: user.id))
+-  )
+-end
+-```
++Test this project's CSRF wiring: Gonertia does not supply it automatically. Test anonymous and unauthorized direct requests, current role revocation, owner-scoped writes, malformed JSON, errors across redirects and asset-version behavior.
+ 
+-```ruby
+-it 'excludes auth data for unauthenticated users' do
+-  get dashboard_path
+-
+-  expect(inertia).to have_props(auth: hash_including(user: nil))
+-end
+-```
+-
+-### Test Deferred Props
+-
+-```ruby
+-it 'defers expensive analytics data' do
+-  get dashboard_path
+-
+-  expect(inertia).to have_deferred_props(:analytics, :statistics)
+-  expect(inertia).to have_deferred_props(:slow_data, group: :slow)
+-end
+-```
+-
+-### Partial Reload Helpers
+-
+-```ruby
+-it 'supports partial reload' do
+-  get users_path
+-
+-  # Simulate partial reload — only fetch specific props
+-  inertia_reload_only(:users, :pagination)
+-
+-  # Or exclude specific props
+-  inertia_reload_except(:expensive_stats)
+-
+-  # Load deferred props
+-  inertia_load_deferred_props(:default)
+-  inertia_load_deferred_props # loads all groups
+-end
+-```
+-
+-### Test External Redirects (inertia_location)
+-
+-```ruby
+-it 'redirects to Stripe via inertia_location' do
+-  post checkout_path
+-
+-  # inertia_location returns 409 with X-Inertia-Location header
+-  expect(response).to have_http_status(:conflict)
+-  expect(response.headers['X-Inertia-Location']).to match(/stripe\.com/)
+-end
+-```
+-
+-### NEVER Test These
+-
+-- **Inertia framework behavior** — don't test that `<Form>` sends CSRF tokens or that `router.visit` works. Test YOUR controller logic.
+-- **Exact prop structure** — use `have_props(users: satisfy { ... })`, not deep equality on full JSON. Brittle tests break when you add a column.
+-- **Flash without `follow_redirect!`** — after POST/PATCH/DELETE with redirect, you MUST `follow_redirect!` before asserting flash or props. Without it you're asserting against the 302, not the page.
+-- **Deferred prop values on initial load** — deferred props are `nil` in the initial response because they're fetched in a separate request after page render. Use `have_deferred_props(:key)` to verify they're registered, or `inertia_load_deferred_props` to resolve them in tests.
+-- **Mocked Inertia responses** — use `type: :request` specs that exercise the full stack. `type: :controller` specs with `assigns` don't work because Inertia uses a custom render pipeline that only executes in the full request cycle.
+-
+-### Direct Access (use matchers above when possible)
+-
+-```ruby
+-inertia.component       # => 'users/index'
+-inertia.props           # => { users: [...] }
+-inertia.props[:users]   # direct prop access
+-inertia.flash           # => { notice: 'Created!' }
+-inertia.deferred_props  # => { default: [:analytics], slow: [:report] }
+-```
++Do not duplicate the entire Inertia library suite, assert private implementation details or mock away the adapter when testing its integration. Keep domain-rule matrices below HTTP and SQL/transaction correctness against PostgreSQL.
+ 
+ ## Related Skills
+-- **Controller patterns** → `inertia-rails-controllers` (prop types, flash, PRG)
+-- **Form flows** → `inertia-rails-forms` (submission, validation)
+-- **Deferred/shared props** → `inertia-rails-pages` (Deferred, usePage)
+ 
+-## References
++`inertia-go-controllers`, `inertia-go-forms`, `inertia-go-pages`, `go-serialization`.
+ 
+-**MANDATORY — READ ENTIRE FILE** when writing Minitest tests (not RSpec):
+-[`references/minitest.md`](references/minitest.md) (~40 lines) — Minitest assertions
+-equivalent to the RSpec matchers above.
++See [request test patterns](references/http-tests.md) for protocol setup.
+ 
+-**Do NOT load** `minitest.md` for RSpec projects — the matchers above are all
+-you need.
++## Deferred Failure and Retry
++
++For any deferred feature, force its query deadline and a query failure. Verify the
++actual response and UI contract: Gonertia v3.0.0 returns Render errors, not rescuedProps.
++An unexpected failure must reach the error boundary and visible HTTP/network error UI,
++not a perpetual fallback or empty success. A deliberate recoverable typed result must
++be logged and tested as its own branch. Test retry with the same filter and after
++access is revoked; retries must not recover another actor's data. Check cleanup of
++error listeners when navigating away. Field-validation onError is not a 500 handler.
+--- original/references/minitest.md
++++ adapted/references/http-tests.md
+@@ -1,39 +1,16 @@
+-# Minitest Assertions for Inertia Rails
++# Go Request Test Patterns
+ 
+-## Setup
++Use `httptest.NewServer` when cookie/redirect behavior matters and `httptest.NewRecorder` for a focused handler contract. Keep redirects disabled initially so a mutation's status is observable.
+ 
+-```ruby
+-# test/test_helper.rb
+-require 'inertia_rails/minitest'
++```go
++client := &http.Client{
++    Jar: jar,
++    CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
++}
+ ```
+ 
+-## Assertions
++Fetch the page first, read its CSRF token and Inertia asset version, then submit strict JSON with the same cookie jar and `X-CSRF-Token`. Follow an expected 303 manually. Decode response bodies only after checking status/content type.
+ 
+-| Assertion | Purpose |
+-|-----------|---------|
+-| `assert_inertia_response` | Verify Inertia response |
+-| `assert_inertia_component('path')` | Check component name |
+-| `assert_inertia_props(key: value)` | Partial props match |
+-| `assert_inertia_props_equal(key: value)` | Exact props match |
+-| `assert_no_inertia_prop(:key)` | Assert prop absent |
+-| `assert_inertia_flash(key: value)` | Partial flash match |
+-| `assert_inertia_flash_equal(key: value)` | Exact flash match |
+-| `assert_no_inertia_flash(:key)` | Assert flash absent |
+-| `assert_inertia_deferred_props(:key)` | Check deferred props |
++For partial requests set the component and requested prop headers explicitly. Prove deferred loaders did not run initially, then check their values and authorization on the second request. For private DTOs assert absent sensitive keys as well as expected public values.
+ 
+-## Example
+-
+-```ruby
+-test 'renders users index' do
+-  get events_path
+-
+-  assert_inertia_response
+-  assert_inertia_component 'events/index'
+-  assert_inertia_props title: 'Rails World'
+-  assert_no_inertia_prop :secret
+-end
+-```
+-
+-Partial reload and deferred prop helpers (`inertia_reload_only`,
+-`inertia_reload_except`, `inertia_load_deferred_props`) work the
+-same in both RSpec and Minitest.
++Use an isolated test schema/database; migrations and constraints are real. Never point integration tests at production. Cleanup failures must fail the test, and asynchronous work must terminate before teardown.

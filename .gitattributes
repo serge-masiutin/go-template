@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# Integrity checks require the original skill and provenance bytes on every platform.
+.agents/skills/** -text -whitespace
+third_party/skills/** -text -whitespace
+third_party/licenses/** -text -whitespace
+web/public/fonts/** -text -whitespace

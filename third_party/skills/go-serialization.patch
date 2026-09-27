@@ -1,0 +1,247 @@
+--- original/SKILL.md
++++ adapted/SKILL.md
+@@ -1,112 +1,108 @@
+ ---
+-name: rails-serialization
+-description: Serialize explicit JSON boundaries in StarterApp Rails without leaking model data; keep entity, page, shared, loading, and consumer type contracts separate. Use for APIs, Native messages, and the existing trace viewer.
++name: go-serialization
++description: Serialize explicit Go JSON and Inertia boundaries without leaking persistence fields; keep entity, page, shared, loading, and TypeScript contracts separate. Use when changing response shapes or prop loading.
+ ---
+ 
+-# Rails Serialization
++# Go Serialization
+ 
+ Keep reusable entity shapes, page-specific responses, shared data, loading policy,
+-and consumer types separate. StarterApp renders ordinary pages as HTML. Use explicit
+-Ruby contracts at JSON boundaries.
++and consumer types separate. Go renders Inertia pages through Gonertia; React consumes
++explicit JSON contracts. Read actual `go.mod` and frontend types before changing them.
+ 
+ ## Setup: Establish Whether Serialization Is Needed
+ 
+-For an ordinary Rails page, pass authorized records/view inputs to ERB/ViewComponent.
+-Do not create a serializer for every template. For a JSON consumer, inspect its schema,
+-authentication, access scope, content limits, and existing serializer before adding one.
+-`AgentTraceDocument` is the trace allowlist; preserve it instead of inventing a second
+-trace serializer that exposes raw model/provider payloads.
++Inspect the consumer, authentication, access scope, content limits, and existing DTO
++before adding a new shape. The starter's `accounts.User` is already an explicit public
++shape; its database password hash is never a response field. Do not create a parallel
++serializer layer for every small struct. Use a distinct DTO when persistence and
++presentation differ, or when reuse gives the shape a stable meaning.
+ 
+ ## Entity Shape
+ 
+-Use a named small serializer/value object when the shape is reused. List fields rather
+-than calling unrestricted `as_json` on a model. Pass context explicitly where needed;
+-serialization should not query, mutate, send notifications, or consult hidden global state.
++List fields in a small typed struct. Conversion must not query, mutate, send notifications,
++or consult globals. Pass presentation context explicitly when needed.
+ 
+-```ruby
+-class ProjectSummary
+-  def initialize(project)
+-    @project = project
+-  end
++```go
++type ProjectSummary struct {
++    ID        int64     `json:"id,string"`
++    Name      string    `json:"name"`
++    UpdatedAt time.Time `json:"updatedAt"`
++}
+ 
+-  def as_json(*)
+-    {
+-      id: @project.id,
+-      name: @project.name,
+-      updated_at: @project.updated_at.iso8601
++func summarize(project Project) ProjectSummary {
++    return ProjectSummary{
++        ID: project.ID, Name: project.Name, UpdatedAt: project.UpdatedAt,
+     }
+-  end
+-end
++}
+ ```
+ 
+-This is an illustrative feature object, not an existing StarterApp class. Confirm ID
+-representation and timestamp precision with the consumer contract. Preload associations
+-in the query layer if the shape needs them; test collection growth for N+1.
++This is an illustrative feature, not an installed Project model. IDs cross JavaScript
++boundaries as strings. `time.Time` marshals as RFC3339 with variable fractional precision;
++normalize UTC at the boundary when the contract requires it. Fetch related records in
++the query, not in per-item converters. Test collection growth for N+1.
+ 
+ ## Page-Specific Response
+ 
+-Compose only the entities and metadata a real JSON consumer needs. Keep pagination,
+-filters, totals, and domain records distinct. Authorize and scope before serializing.
+-Don't let a serializer choose the actor's accessible collection implicitly.
+-
+-```ruby
+-def index
+-  authorize! Project
+-  projects = authorized_scope(Project.all).order(:id).limit(50)
+-  render json: { projects: projects.map { |project| ProjectSummary.new(project).as_json } }
+-end
+-```
+-
+-The example demonstrates a bounded shape, not a complete pagination API. A production
+-collection contract must define navigation/cursors and limits appropriate to the feature.
+-For HTML pages, use the standard ERB response instead of this JSON path.
++Authorize and scope before serialization. Keep records, pagination, filters, and totals
++distinct. For example, an authenticated handler can call
++`projects.List(r.Context(), actor.ID, filter)` and then render
++`engine.Render(w, r, "Projects/Index", inertia.Props{"projects": summaries})`.
++The handler must handle both query and render errors through its HTTP error boundary.
++Define cursor/navigation and maximum page size for a real collection; a bounded list
++alone is not a complete pagination API. Return Inertia responses for Inertia visits;
++use `encoding/json` for an independently designed API consumer.
+ 
+ ## Shared Data
+ 
+-Shared layout information stays in Rails helpers/context. If a JS consumer truly needs
+-shared configuration, expose a minimal explicit allowlist with required/optional fields.
+-Do not serialize Current, the whole user, session tokens, or arbitrary settings.
+-Translation dictionaries are produced from Rails keys for the actual feature; there
+-is no second handwritten JS copy of the application's English strings.
++Use request-local `inertia.SetProp` for scoped data. Only process-invariant public data
++may use global sharing; never mutate global props with a request's user or permissions.
++The starter shares `csrfToken` through `inertia.Always` so partial reloads retain the
++current token. That token is intentionally exposed to the same-origin frontend;
++session cookies, password hashes, provider tokens, and arbitrary config are not.
++Expose an explicit user DTO only on pages that require it, unless a real shared layout
++contract requires otherwise. No translation generator is installed in this starter.
+ 
+ ## Explicit Rendering and Naming
+ 
+-There is no implicit `{Controller}{Action}Resource` lookup or automatic instance-variable
+-serialization in this project. Use explicit `render json:` or HTML rendering with
+-named inputs. Name the serializer by domain/consumer when that makes its purpose clear.
+-Keep page-only fields out of a reusable entity shape; use composition rather than
+-inventing a universal `ApplicationResource` abstraction with hidden behavior.
++Use explicit component names and props; there is no inferred serializer lookup.
++Name reusable DTOs by domain or consumer. Compose page-only metadata around entity
++shapes instead of adding optional fields to every entity or introducing a universal
++resource abstraction. An empty collection promised as an array must serialize as `[]`,
++not a nil slice's `null`; initialize it in the query/DTO boundary and test the contract.
+ 
+ ## Types and Schema
+ 
+-Read `hotwire-contracts`. Define nullability, omitted fields, IDs, enums, date/time units,
+-array order, and schema/version. Test exactly the security-sensitive allowlist. A TypeScript
+-interface or Kotlin data class cannot validate arbitrary network JSON by itself.
+-No Alba/Typelizer generation is active; if later introduced, record the actual generator,
+-inputs, output directory, commands, and consumers and keep generation reproducible.
++Read `inertia-go-typescript`. Define nullability, omitted fields, IDs, enums, date/time
++units, order, and version compatibility. Go JSON tags and TypeScript properties must
++agree. Test security-sensitive allowlists, including fields that must be absent.
++TypeScript annotations do not validate arbitrary network input. There is no automatic
++Go-to-TypeScript generator installed; update both sides and their contract tests.
++If introducing a generator, record its version, inputs, outputs, command, and consumers.
+ 
+ ## Loading Options
+ 
+-Read [loading-options.md](references/loading-options.md) for the complete mapping of
+-regular, optional, deferred/grouped, once/expiry, merge/deep-merge, always, and scroll
+-options. Loading belongs to the request/job/UI boundary, not a side effect of serializing
+-an attribute. Don't invent `defer:` or `once:` keyword APIs on plain Ruby serializers.
++Read [loading options](references/loading-options.md) and the linked adapter reference for regular,
++optional, deferred/grouped, once, merge, always, and scroll options supported by the
++pinned Gonertia version. Loading belongs to the request boundary, never a DTO method.
++Use one of Gonertia's exact loader function signatures, such as
++`func(context.Context) (any, error)`. Reauthorize every deferred/partial request and
++keep owner scope inside its query. Loaders can run concurrently: share a pool, not a
++single `pgx.Conn` or transaction across concurrent loaders.
+ 
+ ## Troubleshooting
+ 
+ | Symptom | Cause to investigate | Resolution |
+ | --- | --- | --- |
+-| Unexpected/private fields | Unrestricted model JSON or merged SDK payload | Restore explicit allowlist and negative access tests |
+-| Collection is slow | Serializer queries per item | Preload at query boundary, verify N+1 |
+-| Consumer missing field | Producer/consumer schema drift | Update both and test version compatibility |
+-| Null silently becomes empty | Undocumented default/optional chaining | Define optionality and reject malformed required input |
+-| “Resource not found” expectation | Copied Alba naming convention | Use actual explicit Rails render path |
+-| Types never generated | Generator not installed/configured | Use actual contract; don't claim a nonexistent task |
+-| Stale or unauthorized cached JSON | Missing access/version scope | Recheck authorization and correct cache boundary |
++| Private fields appear | Persistence struct or provider payload serialized directly | Restore an explicit allowlist and negative access tests |
++| Collection is slow | Per-record database reads | Query related data in batches and measure query count |
++| Consumer misses field | JSON tags and TypeScript drift | Update producer and consumer together |
++| Null silently becomes empty | Undocumented optionality | Define the contract at the boundary; reject malformed required input |
++| Component not found | Name differs from React resolver | Fix the explicit render name and test initial HTML plus navigation |
++| Types never generated | No generator configured | Use actual manual contracts; do not invent a command |
++| Stale/foreign props | Missing access scope or unsafe caching | Reauthorize and scope every loader request |
+ 
+ ## Gate
+ 
+-Verify exact allowlist where sensitive, access for guest/owner/foreign/admin as applicable,
+-malformed external input, collection size/query behavior, consumer parsing/compilation,
+-and backward compatibility for installed Native clients. Never include real secrets,
+-user documents, prompt bodies, or raw traces in fixtures.
++Verify exact sensitive-field allowlists, guest/owner/foreign/admin access as applicable,
++malformed external input, empty and bounded collections, query behavior, TypeScript
++compilation, and initial/partial/deferred response shapes. Use synthetic fixtures.
+--- original/references/loading-options.md
++++ adapted/references/loading-options.md
+@@ -1,31 +1,36 @@
+-# Loading Options at the Rails Boundary
++# Loading Options at the Go Boundary
+ 
+-| Loading requirement | Implementation | Contract |
++| Loading requirement | Gonertia v3.0.0 implementation | Contract |
+ | --- | --- | --- |
+-| Regular value | Query once and render current HTML/JSON | Required fields present and authorized |
+-| Lazy evaluation | Query only in the selected request branch | No hidden work while serializing unrelated fields |
+-| Optional | Separate explicit endpoint/frame | Direct requests authorize independently |
+-| Deferred | Eager source frame or persisted job result | Placeholder, loading, error, and ready states |
+-| Deferred group | One region/endpoint for related data | Related results arrive coherently |
+-| Once | Normal rendering, or a measured versioned server cache | Access/tenant/locale and invalidation considered |
+-| Once with expiry | Explicit cache freshness/expiry policy | Expiry doesn't replace authorization |
+-| Always | Essential layout/response fields | Minimal shared contract, not a global data dump |
+-| Merge/append | Stream append/update using stable IDs | Duplicate and ordering behavior explicit |
+-| Deep merge | Explicit domain update or fragment replacement | No generic recursive merge of untrusted input |
+-| Scroll | Bounded query, stable cursor, progressive list/frame | Reset on filter change; end/error/manual load |
+-| Reset | New query/list for changed filter | Stale in-flight responses don't reinsert old rows |
++| Regular value | Direct prop or supported loader | Required fields present and authorized |
++| Lazy evaluation | `func(context.Context) (any, error)` | No work for an excluded partial prop; not a serializer side effect |
++| Optional | `inertia.Optional(loader)` | Omitted initially; explicit partial requests reauthorize |
++| Deferred | `inertia.Defer(loader)` | Later authorized request; placeholder, error and ready UI |
++| Deferred group | `inertia.Defer(loader, "group")` | Group related props without sharing a concurrent transaction |
++| Once | `inertia.Once(loader)` | Verify actual adapter metadata; no assumed cross-navigation cache/expiry |
++| Once with expiry | No direct expiry API in this pinned adapter | Choose an explicit freshness policy; expiry does not replace authorization |
++| Always | `inertia.Always(value)` | Retained on partial requests; minimal shared allowlist |
++| Merge/append | `inertia.Merge(...).Append(...).MatchOn(...)` | Stable keys, ordering and duplicate behavior |
++| Deep merge | `inertia.Merge(...).DeepMerge()` | Explicit trusted response structure, not input authorization |
++| Scroll | `inertia.Scroll(value, inertia.WithMetadata(metadata))` | Bounded query, stable navigation, nested data and reset behavior |
++| Reset | Client visit `reset` + scoped query | Filter changes must not merge old rows into a new result |
++
++See [prop types](../../inertia-go-controllers/references/prop-types.md) for exact signatures,
++examples and supported combinations. Do not combine optional/deferred/merge methods
++by analogy with the Rails adapter.
+ 
+ ## Combining Options
+ 
+-For grouped deferred data that later grows, separate the concerns: one authorized frame
+-loads the initial group; pagination queries produce stable-ID rows; a stream appends them;
+-filter changes replace the list and reset its cursor. Keep these responsibilities explicit.
++For a deferred collection that later grows, authorize every request, group only related
++props, use stable IDs for merges, and reset the prop when the filter changes. Query
++pagination and UI merging are different responsibilities. Concurrent prop loaders
++must not share a `pgx.Tx` or single `pgx.Conn`.
+ 
+-For rarely changing reference data, first render it normally. If measurement warrants
+-caching, choose a key that includes relevant version/access/locale dimensions and a
+-deliberate expiry. Cache the correct representation at one layer. Clearing Turbo snapshots
+-does not expire Rails cache entries or revoke an exposed private payload.
++Start rarely changing reference data as a normal prop. Only add a server cache after
++measurement; include access/version/locale dimensions and explicit invalidation.
++Clearing Inertia history does not expire server caches or revoke data already exposed.
+ 
+-Long AI generation belongs in a job after commit, with persisted state and private
+-invalidation/delivery through the existing AnyCable system. Serialization only describes
+-the resulting authorized response; it must not start a model call while rendering.
++Long AI generation belongs in a separately designed durable worker after commit,
++with persisted state and an authorized result/delivery path. Those optional facilities
++are not installed in this starter. Serialization describes their output; it must not
++start model calls as a hidden attribute conversion.

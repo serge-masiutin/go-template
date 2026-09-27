@@ -1,0 +1,11 @@
+.git
+.agents
+node_modules
+tmp
+.env
+.env.*
+storybook-static
+web/build
+test-results
+playwright-report
+third_party
