@@ -14,7 +14,7 @@
 
 | Исходный навык | Навык Go | Сохранённая основа и содержательная замена |
 | --- | --- | --- |
-| `layered-rails` | `layered-go` | Все 57 исходных документов сопоставлены с Go-версиями; дополнительно добавлен документ источников. Сохраняются слои, specification test, критерии выделения объектов, anti-patterns, workflows и примеры рефакторинга. |
+| `layered-rails` | `layered-go` | Все 57 исходных документов сопоставлены с Go-версиями; дополнительно добавлены источники и контракты установленных библиотек. Сохраняются слои, specification test, критерии выделения объектов, anti-patterns, workflows и примеры рефакторинга. |
 | `inertia-rails-architecture` | `inertia-go-architecture` | Серверная навигация, владение состоянием, decision trees; transport и persistence заменены на Go. |
 | `inertia-rails-controllers` | `inertia-go-controllers` | Render, shared props, authorization, loading; реальные сигнатуры Gonertia. |
 | `inertia-rails-forms` | `inertia-go-forms` | React Form/useForm, uploads и многошаговые формы; строгий JSON, CSRF, 303, ограничения error bags и Precognition. |
@@ -34,9 +34,9 @@ Inertia/React-основа взята из сохранённых оригина
 
 Материалы проверены 27 сентября 2026 года, runtime — Go 1.27.1. [Список первичных источников](../.agents/skills/layered-go/references/go-sources.md) включает Go team, Sameer Ajmani, Damien Neil, Jonathan Amsterdam, Vlad Saioc, Alex Edwards, Dave Cheney и Ardan Labs. Дата публикации отделена от даты проверки: полезные старые принципы не выдаются за новости 2026 года.
 
-`layered-go` не предписывает ORM, universal repository, интерфейс для каждого типа или папку для каждого концептуального слоя. Callbacks заменены явными операциями и транзакциями; `Current` — явными actor/tenant-параметрами; relations/scopes — параметризованными запросами; concerns — композицией. Для ошибок и конкурентности учтены фактические контракты `context`, pgx и текущего Go.
+`layered-go` учитывает установленный GORM, но не требует universal repository, интерфейса для каждого типа или папки для каждого концептуального слоя. Callbacks заменены явными операциями и транзакциями; `Current` — явными actor/tenant-параметрами; relations/scopes — параметризованными запросами; concerns — композицией. Для ошибок и конкурентности учтены фактические контракты `context`, pgx и текущего Go.
 
-Skills содержат примеры расширений, а не перечень установленных функций. Почта, AI, workers, outbox, realtime, uploads и shadcn требуют отдельной реализации под задачу. Новые возможности frontend-библиотеки не означают автоматической поддержки серверным адаптером.
+Skills содержат примеры расширений, а не перечень установленных функций. Почта, AI и workers реализованы через go-mail, Genkit и River; актуальные границы описаны в [наборе библиотек](stack.md). Примеры других каналов, универсального outbox, realtime, uploads и shadcn требуют отдельной реализации под задачу. Новые возможности frontend-библиотеки не означают автоматической поддержки серверным адаптером.
 
 ## Обновление
 
