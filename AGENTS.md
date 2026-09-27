@@ -25,6 +25,7 @@
 | Запуск и инфраструктура | `docs/development.md`, `docs/deployment.md` | `inertia-go-setup` |
 | Медленный запуск | `docs/development.md` | `go-boot-profiling` |
 | README и текст | `README.md` | `good-readme`, `clear-writing` |
+| Книги и документы в skills | `docs/skills.md` | `book-to-skill` |
 
 ## Проверки
 

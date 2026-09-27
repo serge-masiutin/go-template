@@ -1,6 +1,6 @@
 # Skills: состав и происхождение
 
-В `.agents/skills` находятся 30 навыков. Они входят в GitHub template и доступны агенту вместе с проектом. Отдельного сайта, discovery endpoint и установщика, меняющего глобальные настройки агента, нет.
+В `.agents/skills` находится 31 навык. Они входят в GitHub template и доступны агенту вместе с проектом. Отдельного сайта, discovery endpoint и установщика, меняющего глобальные настройки агента, нет.
 
 ## Исходные Evil Martians
 
@@ -9,6 +9,18 @@
 Оригинальные React/Storybook workflows восстановлены вместо проектных Hotwire/Lookbook-переделок. URL, SHA-256 загруженных материалов и каждого файла — в [skills-lock.json](../config/skills-lock.json). Проверка в CI не позволяет незаметно менять их под Go. Ограничения проекта хранятся в корневом `AGENTS.md`.
 
 `clear-writing` сохранён побайтово из `rails-template` на commit, указанном в lock-файле. Один `SKILL.md` выбирает полную русскую или английскую версию по языку целевого текста. В каждой версии есть руководство, шесть глав, приёмы, шпаргалка, словарь и контрольные случаи; язык запроса сам по себе не переводит редактируемый текст. При обновлении копируйте всю папку и вместе обновляйте source commit, архив, mapping и hashes в lock-файле.
+
+## Book-to-skill
+
+[Оригинальный skill](../.agents/skills/book-to-skill/SKILL.md) преобразует книги и документы в навыки агента. Полный upstream-комплект сохранён без изменений: инструкции, Python-экстрактор, tools, документация, тесты и [MIT-лицензия](../.agents/skills/book-to-skill/LICENSE.md). Источник — [virgiliojr94/book-to-skill, commit 80ae087](https://github.com/virgiliojr94/book-to-skill/tree/80ae087784ddbc21dbbfde355fe5509631e0e322); архив и SHA-256 всех файлов закреплены в lock-файле.
+
+В Codex вызовите `$book-to-skill` и укажите путь к документу. Экстрактору нужен Python 3.9+. Проверка доступных обработчиков из корня проекта:
+
+```sh
+mise exec -- python3 .agents/skills/book-to-skill/scripts/extract.py --check
+```
+
+Python-пакеты для отдельных форматов устанавливаются по необходимости и не входят в runtime приложения. Для MOBI/AZW нужен Calibre; режим технических PDF использует Docling. Подробности — в [инструкции источника](../.agents/skills/book-to-skill/docs/install.md).
 
 ## Адаптации
 

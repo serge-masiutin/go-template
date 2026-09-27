@@ -9,7 +9,7 @@ Go + Inertia + React starter для приложения с серверными
 - **React:** TypeScript, Vite, Tailwind и локальный Martian Mono; навигация и формы через Inertia.
 - **Доступ:** серверные сессии, CSRF, проверка владельца записей и актуальных прав администратора.
 - **Проверки:** govulncheck, Go race detector, PostgreSQL integration tests, Vitest, Playwright, сборка Storybook и Docker.
-- **30 skills:** 18 оригинальных Evil Martians, `clear-writing` из Rails-шаблона и 11 адаптаций под Go. Происхождение и различия сохранены в [каталоге](docs/skills.md).
+- **31 skill:** 18 оригинальных Evil Martians, `book-to-skill`, `clear-writing` из Rails-шаблона и 11 адаптаций под Go. Происхождение и различия сохранены в [каталоге](docs/skills.md).
 
 ```text
 React Form → POST /notes → проверка CSRF и входа
