@@ -1,32 +1,32 @@
-# Go Template: контракт работы агента
+# Go Template: agent contract
 
-- Отвечай и пиши документацию по-русски. Код, технические сообщения, комментарии и skills — по-английски; `clear-writing` содержит полные русскую и английскую версии и выбирает язык по целевому тексту.
-- Сначала прочитай связанные файлы, `go.mod`, `package-lock.json` и профильный документ. Меняй контракт вместе со всеми потребителями.
-- Стек: Go `net/http`, Gonertia v3, GORM generics/pgx, Goose, SCS, River, go-mail, Genkit; React, TypeScript, Vite, Tailwind, Storybook. Сервер владеет маршрутами, доступом и данными; React — представлением и локальными взаимодействиями.
-- Используй доменные пакеты `internal`; не создавай по сервису, интерфейсу и репозиторию на каждый endpoint. См. `layered-go` и `docs/architecture.md`.
-- На HTTP-границе декодируй строгий ограниченный JSON. Не принимай владельца из тела вместо аутентифицированного пользователя. SQL параметризуй; транзакционные запросы выполняй через тот же `*sql.Tx`/GORM transaction; River enqueue — `InsertTx` внутри неё.
-- Не включай AutoMigrate, SQL debug logs или business effects в ORM hooks. Mail/AI идут через River; payload содержит ID, worker повторно устанавливает scope, внешние вызовы выполняются вне транзакции.
-- Каждая мутация передаёт `X-CSRF-Token`. Ошибка формы — session errors + 303; неверный JSON — 400; отсутствие доступа — 403/404. Precognition не поддерживается и отклоняется.
-- Авторизуй каждый запрос, включая partial/deferred. Не клади пользователя в глобальные props; используй request context. Loaders Gonertia могут исполняться параллельно: pool допустим, общий Tx/Conn — нет.
-- DTO перечисляют публичные поля. ID в JSON — строки. Обновляй Go JSON и TypeScript вместе. Автоматической генерации типов нет.
-- Ошибки не подменяй пустыми результатами. Логируй безопасный контекст и категории; не записывай пароли, DSN, session/CSRF tokens или пользовательские тексты.
-- Не переписывай оригинальные EM skills под проект. Их файлы проверяются по SHA-256. Проектные ограничения — здесь; адаптации и источники — `docs/skills.md`.
+- Write project documentation, code comments, technical messages, and skill instructions in English. Respond to the user in their requested language. `clear-writing` has complete Russian and English editions and selects the guide by the target text's language.
+- Read related files, `go.mod`, `package-lock.json`, and the relevant guide before editing. Update a contract and all its consumers together.
+- Stack: Go `net/http`, Gonertia v3, GORM generics/pgx, Goose, SCS, River, go-mail, Genkit; React, TypeScript, Vite, Tailwind, Storybook. The server owns routes, access, and data; React owns presentation and local interactions.
+- Use feature packages under `internal`; do not create a service, interface, and repository for every endpoint. See `layered-go` and `docs/architecture.md`.
+- Decode strict, size-limited JSON at the HTTP boundary. Derive ownership from the authenticated user, not the request body. Parameterize SQL; run transactional queries through the same `*sql.Tx`/GORM transaction and enqueue River jobs with `InsertTx` inside it.
+- Do not enable AutoMigrate, SQL debug logs, or business effects in ORM hooks. Mail/AI run through River; payloads contain IDs, workers reestablish scope, and external calls run outside transactions.
+- Every mutation sends `X-CSRF-Token`. Form errors use session errors plus 303; invalid JSON returns 400; denied access returns 403/404. Precognition is unsupported and rejected.
+- Authorize every request, including partial/deferred requests. Keep the user in request context, not global props. Gonertia loaders may run concurrently: a pool can be shared, a Tx/Conn cannot.
+- DTOs enumerate public fields. JSON IDs are strings. Update Go JSON and TypeScript together; types are not generated automatically.
+- Do not replace errors with empty results. Log safe context and categories; exclude passwords, DSNs, session/CSRF tokens, and user content.
+- Preserve original EM skills; their files are checked with SHA-256. Put project constraints here. Record adaptations and sources in `docs/skills.md`.
 
-## Контекст
+## Context
 
-| Задача | Документ | Skills |
+| Task | Guide | Skills |
 | --- | --- | --- |
-| Архитектура Go | `docs/architecture.md` | `layered-go` |
-| Библиотеки, ORM, очередь, AI | `docs/stack.md`, `docs/background.md`, `docs/ai.md` | `layered-go`, его `references/installed-stack.md` |
-| Страницы, маршруты, формы | `docs/architecture.md` | `inertia-go-architecture`, затем соответствующий `inertia-go-*` |
-| JSON и TypeScript | `docs/architecture.md` | `go-serialization`, `inertia-go-typescript` |
-| Компоненты и Storybook | `docs/development.md` | `tailwind-best-practices`, `sb-hub`, затем нужный `sb-*` |
-| Проверки | `docs/testing.md` | `inertia-go-testing` |
-| Запуск и инфраструктура | `docs/development.md`, `docs/deployment.md` | `inertia-go-setup` |
-| Медленный запуск | `docs/development.md` | `go-boot-profiling` |
-| README и текст | `README.md` | `good-readme`, `clear-writing` |
-| Книги и документы в skills | `docs/skills.md` | `book-to-skill` |
+| Go architecture | `docs/architecture.md` | `layered-go` |
+| Libraries, ORM, queues, AI | `docs/stack.md`, `docs/background.md`, `docs/ai.md` | `layered-go` and its `references/installed-stack.md` |
+| Pages, routes, forms | `docs/architecture.md` | `inertia-go-architecture`, then the relevant `inertia-go-*` |
+| JSON and TypeScript | `docs/architecture.md` | `go-serialization`, `inertia-go-typescript` |
+| Components and Storybook | `docs/development.md` | `tailwind-best-practices`, `sb-hub`, then the relevant `sb-*` |
+| Testing | `docs/testing.md` | `inertia-go-testing` |
+| Setup and infrastructure | `docs/development.md`, `docs/deployment.md` | `inertia-go-setup` |
+| Slow startup | `docs/development.md` | `go-boot-profiling` |
+| README and writing | `README.md` | `good-readme`, `clear-writing` |
+| Books and documents into skills | `docs/skills.md` | `book-to-skill` |
 
-## Проверки
+## Validation
 
-Команды запускай через `mise exec --`. Для кода и конфигурации выполняй `bin/ci`; для HTTP/SQL/session-контрактов — также integration tests и `bin/test-browser` по `docs/testing.md`. Проверяй изменённое поведение и негативные сценарии. Сообщай, что выполнено и что осталось непроверенным. Не завершай работу со stubs или замаскированными ошибками.
+Run commands through `mise exec --`. For code and configuration changes, run `bin/ci`; for HTTP/SQL/session contracts, also run integration tests and `bin/test-browser` as described in `docs/testing.md`. Check changed behavior and failure cases. Report completed and omitted checks. Do not leave stubs or concealed errors.

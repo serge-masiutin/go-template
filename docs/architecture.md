@@ -1,61 +1,60 @@
-# Архитектура
+# Architecture
 
-Go владеет URL, аутентификацией, авторизацией и данными. Gonertia передаёт имя React-страницы и props: первый запрос возвращает HTML, следующие Inertia-переходы — JSON. В production frontend и backend доступны с одного origin; отдельного публичного JSON API и React Router нет.
+Go owns URLs, authentication, authorization, and data. Gonertia sends a React page name and props: the first request returns HTML, and subsequent Inertia visits return JSON. In production, the frontend and backend share one origin. There is no separate public JSON API or React Router.
 
-## Границы
+## Boundaries
 
-- `cmd/server`: конфигурация, пул БД, session store, HTTP-сервер и завершение по сигналу.
-- `cmd/worker`: River queues, отдельный LISTEN/NOTIFY connection, mail/AI adapters и graceful drain.
-- `cmd/manage`: миграции и создание пользователя через тот же пакет `accounts`.
-- `internal/accounts`, `internal/notes`: типизированные данные, валидация и GORM queries конкретной функции. Маленькому CRUD не нужны пустые service/repository/domain слои.
-- `internal/httpapp`: маршруты, строгий декодер, CSRF, HTTP-авторизация, Inertia и session flash.
-- `internal/database`: один pgx pool с SQL/GORM adapters; Goose и River migrations под deploy lock.
-- `internal/notemail`, `internal/assistant`: явные операции, записи состояния, транзакционный enqueue и внешние adapters.
-- `internal/background`: типизированные River workers, failure cleanup и периодическая сверка.
-- `internal/observability`: Prometheus exporter с ограниченными labels.
-- `web/src`: страницы, компоненты, DTO TypeScript и стили. `web/src/types.ts` — общие типы и единственное расширение `InertiaConfig`.
+- `cmd/server`: configuration, database pool, session store, HTTP server, and signal-driven shutdown.
+- `cmd/worker`: River queues, a dedicated LISTEN/NOTIFY connection, mail/AI adapters, and graceful draining.
+- `cmd/manage`: migrations and user creation through the shared `accounts` package.
+- `internal/accounts`, `internal/notes`: feature-specific types, validation, and GORM queries. Simple CRUD does not need empty service/repository/domain layers.
+- `internal/httpapp`: routes, strict decoding, CSRF, HTTP authorization, Inertia, and session flash.
+- `internal/database`: one pgx pool with SQL/GORM adapters; Goose and River migrations under a deployment lock.
+- `internal/notemail`, `internal/assistant`: explicit operations, state records, transactional enqueue, and external adapters.
+- `internal/background`: typed River workers, failure cleanup, and periodic reconciliation.
+- `internal/observability`: a Prometheus exporter with bounded label cardinality.
+- `web/src`: pages, components, TypeScript DTOs, and styles. `web/src/types.ts` holds shared types and the single `InertiaConfig` augmentation.
 
-При появлении операции, которая координирует несколько записей и инвариантов, выделяйте именованный use case и явно задавайте транзакцию. Переносите проверки доступа в общий контракт операции, если она вызывается не только из HTTP. Внешние эффекты требуют отдельной гарантии доставки после commit; обычная goroutine её не даёт. River `InsertTx` сохраняет delivery intent вместе с данными операции. Подробности — [очередь и почта](background.md), [AI](ai.md).
+When an operation coordinates multiple records and invariants, extract a named use case with an explicit transaction. Move authorization into the operation's shared contract if callers extend beyond HTTP. External effects need a delivery guarantee after commit; an ordinary goroutine does not provide one. River's `InsertTx` stores delivery intent alongside operation data. See [background jobs and email](background.md) and [AI](ai.md).
 
-## HTTP-контракт
+## HTTP contract
 
-| Маршрут | Доступ и поведение |
+| Route | Access and behavior |
 | --- | --- |
-| `GET /login` | Форма входа |
-| `POST /login` | Проверка пароля, смена session ID и CSRF, 303 на `/` |
-| `POST /logout` | Уничтожение сессии, очистка Inertia history, 303 на `/login` |
-| `GET /` | Вход обязателен; до 50 последних заметок текущего пользователя |
-| `POST /notes` | 1–2000 Unicode-символов после trim; владелец берётся из сессии |
-| `DELETE /notes/{id}` | Удаление только своей заметки; чужая/отсутствующая — 404 |
-| `GET /admin` | Повторная проверка `admin` в БД; число пользователей |
-| `GET /tools` | Свои почтовые и AI-операции, текущая доступность функций |
-| `POST /tools/email` | Вход обязателен; письмо только себе, одна активная операция |
-| `POST /tools/assistant` | Вход обязателен; 1–500 символов, одна активная операция |
-| `GET /metrics` | Только при настроенном Bearer token, без session-аутентификации |
-| `GET /health/live` | Процесс отвечает |
-| `GET /health/ready` | PostgreSQL отвечает в пределах двух секунд |
+| `GET /login` | Sign-in form |
+| `POST /login` | Verify password, rotate session ID and CSRF token, redirect to `/` with 303 |
+| `POST /logout` | Destroy session, clear Inertia history, redirect to `/login` with 303 |
+| `GET /` | Sign-in required; up to 50 latest notes belonging to the current user |
+| `POST /notes` | 1–2000 Unicode characters after trimming; owner comes from the session |
+| `DELETE /notes/{id}` | Delete the user's own note; another user's or missing note returns 404 |
+| `GET /admin` | Recheck `admin` in the database; show the user count |
+| `GET /tools` | Show the user's email/AI operations and current feature availability |
+| `POST /tools/email` | Sign-in required; email only the current user; one active operation |
+| `POST /tools/assistant` | Sign-in required; 1–500 characters; one active operation |
+| `GET /metrics` | Available only with a configured Bearer token; no session authentication |
+| `GET /health/live` | Process responds |
+| `GET /health/ready` | PostgreSQL responds within two seconds |
 
-Мутации принимают ограниченный JSON (16 KiB) и `X-CSRF-Token`. Неизвестные поля и лишний JSON отклоняются. Для файлов потребуется отдельный multipart-контракт и лимиты. Precognition-запросы отклоняются: validation-only обработчик не реализован.
+Mutations accept JSON limited to 16 KiB and require `X-CSRF-Token`. Unknown fields and trailing JSON are rejected. File uploads would need a separate multipart contract and limits. Precognition requests are rejected because validation-only handling is not implemented.
 
-Ошибки полей записываются в session flash, затем следует 303 и обычный GET с `errors`. Поля ошибок плоские; named error bags автоматически не поддерживаются. Неверный JSON — 400, отсутствие права — 403/404, неожиданный сбой — 500. `net/http.CrossOriginProtection` дополняет session CSRF-проверку.
+Field errors are stored in session flash, followed by a 303 redirect and a normal GET containing `errors`. Error fields are flat; named error bags are not supported automatically. Invalid JSON returns 400, denied access returns 403/404, and unexpected failures return 500. `net/http.CrossOriginProtection` supplements session CSRF validation.
 
-Публичные ID сериализуются строками. Password hash, cookie и приватные конфигурационные значения в props не попадают. CSRF передаётся через `Always`, включая partial reload. Пользователь — prop конкретной страницы, не глобальная переменная. Каждый повторный запрос заново проверяет доступ.
+Public IDs serialize as strings. Password hashes, cookies, and private configuration values never enter props. CSRF uses `Always`, including partial reloads. The user is a page-specific prop, not a global variable. Every subsequent request checks access again.
 
-## Сессии и эксплуатация
+## Sessions and operations
 
-SCS хранит сессии в PostgreSQL: 24 часа абсолютного срока и 2 часа бездействия. В production cookie имеет Secure; HttpOnly и SameSite=Lax действуют во всех средах. Права администратора читаются заново на каждом защищённом запросе.
+SCS stores sessions in PostgreSQL with a 24-hour absolute lifetime and a two-hour idle timeout. Cookies use Secure in production; HttpOnly and SameSite=Lax apply in every environment. Protected admin requests read the current role from the database.
 
-Вход ограничен десятью попытками в минуту на прямой адрес соединения; таблица ограничена 4096 адресами. Forwarded-заголовки не считаются доверенным источником IP. За reverse proxy адрес может быть общим: настройте ограничение на внешнем входе и продумайте общий лимит при нескольких экземплярах приложения.
+Sign-in is limited to ten attempts per minute per direct connection address; the limiter holds at most 4096 addresses. Forwarded headers are not trusted as the source IP. A reverse proxy may make the address shared: configure limits at the public ingress and consider a shared limit across application instances.
 
-Production игнорирует Vite hot file, использует manifest и версию ресурсов. При несовпадении версии Gonertia отвечает 409 для полной перезагрузки. CSP разрешает same-origin scripts; inline JavaScript по умолчанию запрещён. Ошибки логируются безопасными категориями и SQLSTATE, без сырых driver messages с пользовательскими значениями. Panic на HTTP-границе даёт 500 и stack trace без значения panic.
+Production ignores the Vite hot file and uses the build manifest and asset version. A version mismatch makes Gonertia return 409 for a full reload. CSP allows same-origin scripts and blocks inline JavaScript by default. Errors are logged as safe categories and SQLSTATE values, without raw driver messages containing user values. An HTTP-boundary panic returns 500 and logs a stack trace without the panic value.
 
-## Как развивать
+## Extending the application
 
-`layered-go` сохраняет методику оригинального `layered-rails`, но заменяет framework-механизмы на Go-контракты. Четыре концептуальных слоя не требуют четырёх деревьев каталогов. Для Inertia-функций начните с `inertia-go-architecture`, затем загрузите профильный skill. Поддержку deferred, uploads, shadcn, новых каналов уведомлений и других возможностей добавляйте вместе с обработкой ошибок и тестами; их примеры не означают, что они установлены.
+`layered-go` retains the design method of `layered-rails` while replacing framework mechanisms with Go contracts. Four conceptual layers do not require four directory trees. For Inertia features, start with `inertia-go-architecture`, then load the relevant skill. Add deferred pages, uploads, shadcn, new notification channels, or other features together with error handling and tests; skill examples do not mean those features are installed.
 
+## Persistence and background effects
 
-## Persistence и фоновые эффекты
+GORM records and public DTOs are separate: the password hash is not a field of `accounts.User`. Background-operation projections select only the public fields explicitly mapped to DTOs. Do not decode HTTP input directly into ORM records. GORM query fragments, table names, and sort expressions belong to the server; user values use bind parameters.
 
-GORM records и публичные DTO отделены: password hash не является полем `accounts.User`, для фоновых операций выбираются только публичные поля, которые явно переводятся в DTO. Не принимайте ORM records напрямую из HTTP. GORM query fragments, таблицы и sort expressions принадлежат серверу; пользовательские значения передаются bind-параметрами.
-
-GORM `Transaction` предоставляет общий `*sql.Tx` для нескольких записей и River enqueue. Внешний SMTP/model call происходит после commit и после atomic claim состояния. Шаблон не добавляет business callbacks, AutoMigrate или lazy associations. Pure domain behavior не зависит от GORM/HTTP.
+GORM's `Transaction` supplies the shared `*sql.Tx` for record changes and River enqueue. External SMTP/model calls happen after commit and an atomic state claim. The template adds no business callbacks, AutoMigrate, or lazy associations. Pure domain behavior does not depend on GORM or HTTP.

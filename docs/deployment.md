@@ -1,14 +1,14 @@
-# Контейнер и деплой
+# Containers and deployment
 
-Образ собирает frontend и три Go-бинарника, затем запускает сервер от nonroot в distroless. Node, компилятор, Storybook и skills в runtime image не попадают.
+The image builds the frontend and three Go binaries, then runs the server as a non-root user in distroless. Node, the compiler, Storybook, and skills are excluded from the runtime image.
 
 ```sh
 docker build -t my-app .
 ```
 
-Задайте `DATABASE_URL`, `PUBLIC_URL=https://app.example.com`; по умолчанию образ использует `APP_ENV=production` и `HTTP_ADDR=0.0.0.0:3000`. Секреты передавайте средствами платформы. `compose.yml` предназначен для локальной разработки: его пароль и отключённый TLS не подходят для публичной БД.
+Set `DATABASE_URL` and `PUBLIC_URL=https://app.example.com`. The image defaults to `APP_ENV=production` and `HTTP_ADDR=0.0.0.0:3000`. Supply secrets through your platform. `compose.yml` is for local development; its password and disabled TLS are unsuitable for a public database.
 
-Пример формы команд, где переменные уже заданы безопасным способом:
+These commands assume the environment variables have already been supplied securely. Run the server and worker as separate services:
 
 ```sh
 docker run --rm --env DATABASE_URL --env PUBLIC_URL --entrypoint /app/manage my-app migrate
@@ -17,15 +17,18 @@ docker run --rm -p 127.0.0.1:3000:3000 --env DATABASE_URL --env PUBLIC_URL my-ap
 docker run --rm --env DATABASE_URL --env PUBLIC_URL --entrypoint /app/worker my-app
 ```
 
-Команда создания пользователя читает пароль из stdin. Выполняйте миграции отдельным шагом перед запуском новой версии. Для меняющегося приложения проектируйте миграции совместимыми с одновременно работающими версиями; наличие транзакции не делает любое DDL-изменение безопасным для rolling deploy.
+The user-creation command reads the password from standard input. Run migrations as a separate step before starting a release. Design migrations for compatibility between concurrently running versions; a transaction does not make every DDL change safe for a rolling deployment.
 
-Reverse proxy завершает TLS, сохраняет публичный Host, ограничивает допустимые hostnames и размер/скорость запросов. Secure cookie требует HTTPS в браузере. Не открывайте базу, профилировщик и внутренние интерфейсы в интернет. Встроенный login limiter локален процессу и видит адрес соединения; настройте внешний лимит с учётом proxy и числа экземпляров.
+The reverse proxy terminates TLS, preserves the public Host, restricts allowed hostnames, and limits request sizes and rates. Secure cookies require HTTPS in the browser. Keep the database, profiler, and internal interfaces off the public internet. The built-in sign-in limiter is local to each process and sees the connection address; configure an ingress limit that accounts for the proxy and instance count.
 
-Проверки состояния: `/health/live` проверяет процесс, `/health/ready` — подключение PostgreSQL. SIGTERM запускает graceful shutdown с пределом `SHUTDOWN_TIMEOUT` (по умолчанию 10 секунд). Worker дополнительно получает 5 секунд для отмены после drain timeout; дайте платформе больший termination grace period. Модельный и SMTP timeout ограничены отдельно. Делайте резервные копии PostgreSQL и проверяйте восстановление.
+`/health/live` checks the process; `/health/ready` checks PostgreSQL connectivity. SIGTERM starts graceful shutdown with the `SHUTDOWN_TIMEOUT` limit, defaulting to ten seconds. The worker has an additional five seconds to cancel work after its drain timeout; allow a longer termination grace period on your platform. Model and SMTP timeouts are bounded separately. Back up PostgreSQL and test restoration.
 
-Шаблон не создаёт инфраструктуру и не публикует приложение на хостинг. Для реального окружения отдельно проверьте DNS/TLS, секреты, права БД, proxy, backups и поведение обновления. Production CSP блокирует inline scripts; новые внешние сервисы требуют осознанного изменения политики и браузерной проверки.
+The template does not provision infrastructure or publish the application to a host. Before deployment, verify DNS/TLS, secrets, database permissions, proxy configuration, backups, and release behavior. Production CSP blocks inline scripts; external integrations need an explicit policy change and browser validation.
 
+## Server and worker configuration
 
-Server и worker должны получать согласованные MAIL/AI settings, описанные в [почте](background.md) и [AI](ai.md); добавьте соответствующие `--env`/secret bindings к примеру выше. Базовые команды оставляют обе функции выключенными. Runtime pool budget задаётся на процесс; worker дополнительно открывает одно LISTEN/NOTIFY соединение с тем же search_path. При PgBouncer LISTEN требует session pooling либо прямого подключения; текущий starter использует один DSN, поэтому transaction pooling для worker не поддержан.
+The server and worker need consistent MAIL/AI settings as described in [email](background.md) and [AI](ai.md). Add the corresponding `--env` or secret bindings to the commands above; the base commands leave both features disabled.
 
-`/health/ready` проверяет web-процесс и БД, но не доказывает работу worker. Контролируйте worker как отдельный сервис, его exit status и рост очереди. River UI/Mailpit из Compose привязаны к loopback и предназначены для разработки. Production-панель River UI требует отдельно настроенной аутентификации и сетевого доступа.
+The runtime pool budget applies per process. The worker also opens one LISTEN/NOTIFY connection with the same search path. With PgBouncer, LISTEN requires session pooling or a direct connection. The starter currently uses one DSN, so transaction pooling is not supported for the worker.
+
+`/health/ready` checks the web process and database, not worker health. Supervise the worker as a separate service and monitor its exit status and queue growth. Compose binds River UI and Mailpit to loopback for development. A production River UI needs its own authentication and network-access configuration.

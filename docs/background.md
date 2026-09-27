@@ -1,39 +1,39 @@
-# Очередь и почта
+# Background jobs and email
 
-`cmd/server` ставит задания, `cmd/worker` выполняет их. Оба используют PostgreSQL. `bin/dev` запускает server, worker и Vite; отдельно worker запускается командой `mise exec -- bin/worker`. В production это два процесса из одного образа.
+`cmd/server` enqueues work and `cmd/worker` executes it. Both use PostgreSQL. `bin/dev` starts the server, worker, and Vite; run the worker independently with `mise exec -- bin/worker`. In production, the server and worker are separate processes from the same image.
 
-## Транзакции и исполнение
+## Transactions and execution
 
-`notemail.Service.Request` и `assistant.Service.Request` создают запись операции и вызывают River `InsertTx` внутри одной GORM-транзакции. River получает именно её `*sql.Tx`. Доступ к БД через GORM, SCS и обычный pgx разделяет один пул; worker дополнительно использует одно отдельное соединение LISTEN/NOTIFY.
+`notemail.Service.Request` and `assistant.Service.Request` create an operation record and call River's `InsertTx` inside one GORM transaction. River receives that transaction's `*sql.Tx`. GORM, SCS, and direct pgx access share one pool; the worker also uses a dedicated LISTEN/NOTIFY connection.
 
-Payload job содержит только ID операции. Типы `note_email_v1`, `notes_assistant_v1`, `reconcile_work_v1` версионированы. Не меняйте смысл уже поставленных payload без поддержки прежней версии. Worker заново загружает запись, определяет владельца и читает только его заметки; удалённый аккаунт отменяет работу через FK cascade.
+Job payloads contain only operation IDs. The types `note_email_v1`, `notes_assistant_v1`, and `reconcile_work_v1` are versioned. Do not change the meaning of queued payloads without supporting their old version. The worker reloads the operation, establishes its owner, and reads only that owner's notes. Account deletion removes dependent operations through a foreign-key cascade, preventing pending work from loading them.
 
-Mail работает с `WORKER_CONCURRENCY` параллельными задачами, AI — с одной на процесс. Несколько процессов увеличивают общую параллельность. По умолчанию mail/AI получают одну попытку; River не должен автоматически повторять внешний эффект с неизвестным результатом. У операции есть conditional update `queued → sending/running` перед внешним вызовом. Повторное выполнение завершённой операции ничего не отправляет; повтор начатой операции требует разбирательства, а не ещё одного списания или письма.
+Email uses `WORKER_CONCURRENCY` parallel workers; AI uses one per process. Additional processes increase total concurrency. Mail/AI jobs default to one attempt: River must not automatically repeat an external effect with an unknown result. A conditional `queued → sending/running` update precedes the external call. Re-executing a completed operation sends nothing; replaying a started operation requires investigation rather than another charge or message.
 
-SMTP может принять письмо, после чего соединение или запись результата могут оборваться. `failed` означает также неопределённый исход; проверьте inbox/Mailpit перед повтором. Пользовательский повтор создаёт новую операцию. У AI смена модели или prompt version для уже поставленной работы приводит к ошибке; новый запрос использует текущую конфигурацию.
+SMTP can accept a message before the connection or result write fails. A `failed` state can therefore include an unknown outcome; inspect the inbox or Mailpit before retrying. A user retry creates a new operation. For AI, a model or prompt-version change makes already queued work fail; a new request uses the current configuration.
 
-River timeout — 6 минут, rescue threshold — 7 минут. Периодическая задача раз в минуту переводит зависшую операцию в `failed`, когда её River job уже terminal или удалён. Она не повторяет внешний вызов. После аварийного завершения процесса состояние может оставаться промежуточным до следующего rescue/maintenance цикла. При остановке worker перестаёт брать задания, ждёт `SHUTDOWN_TIMEOUT`, затем отменяет незавершённую работу с дополнительным пределом 5 секунд.
+The River timeout is six minutes; the rescue threshold is seven minutes. A periodic job runs once a minute and marks a stuck operation `failed` when its River job is terminal or has been removed. It does not repeat the external call. After a process crash, state may remain intermediate until a rescue/maintenance cycle runs. On shutdown, the worker stops taking jobs, waits for `SHUTDOWN_TIMEOUT`, then cancels unfinished work with an additional five-second limit.
 
-## Почта
+## Email
 
-`.env.example` направляет SMTP в локальный Mailpit: `127.0.0.1:1025`; web UI — `http://localhost:8025`. Mailpit из `compose.yml` не имеет relay. `/tools` отправляет заметки только на email вошедшего пользователя. Шаблон — `internal/notemail/notes.tmpl`, протокол — go-mail в `internal/mailing`.
+`.env.example` routes SMTP to local Mailpit at `127.0.0.1:1025`; its web UI is `http://localhost:8025`. Mailpit in `compose.yml` has no relay. `/tools` sends notes only to the signed-in user's email address. The template is `internal/notemail/notes.tmpl`; `internal/mailing` implements the protocol with go-mail.
 
-| Переменная | Значение |
+| Variable | Contract |
 | --- | --- |
-| `MAIL_ENABLED` | По умолчанию false в бинарнике; true в development-примере |
-| `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` | Обязательный host/from при включении; default port 587 |
-| `MAIL_TLS` | `starttls` (обязательный STARTTLS), `tls` (implicit TLS), `none` |
-| `MAIL_USERNAME`, `MAIL_PASSWORD` | Задаются вместе; SMTP AUTH PLAIN только с TLS |
+| `MAIL_ENABLED` | Defaults to false in the binary; true in the development example |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` | Host/from required when enabled; port defaults to 587 |
+| `MAIL_TLS` | `starttls` (required STARTTLS), `tls` (implicit TLS), or `none` |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Set together; SMTP AUTH PLAIN requires TLS |
 | `MAIL_TIMEOUT` | 1s–1m; default 10s |
 
-Plaintext разрешён только вне production и без SMTP credentials. Письма отправляются вне транзакции БД. `MAIL_TIMEOUT` ограничивает всю отправку; отмена job закрывает соединение, включая ожидание приветствия и TLS handshake. Секреты, SMTP dialogue и тела писем в логи не выводятся.
+Plaintext is allowed only outside production and without SMTP credentials. Email is sent outside the database transaction. `MAIL_TIMEOUT` bounds the entire send; job cancellation closes the connection, including during the greeting or TLS handshake. Secrets, SMTP dialogue, and message bodies are excluded from logs.
 
-## Интерфейс очередей
+## Queue interface
 
-После `bin/setup`:
+After `bin/setup`, run:
 
 ```sh
 docker compose --profile tools up -d riverui
 ```
 
-Откройте `http://localhost:8087`. При занятом порте: `RIVERUI_PORT=8088 docker compose --profile tools up -d riverui`. Используется OSS River UI. Порт привязан к loopback; это локальный операционный интерфейс без авторизации приложения. Не публикуйте его через внешний proxy без отдельной аутентификации. Он показывает только ID в job args, но имеет права управления очередями. Повтор mail/AI через River UI не снимает защиту от повторного внешнего эффекта.
+Open `http://localhost:8087`. If the port is occupied, use `RIVERUI_PORT=8088 docker compose --profile tools up -d riverui`. The template uses OSS River UI, bound to loopback. This is a local operations interface without application authentication; do not expose it through a public proxy without separate authentication. Job arguments show only IDs, but the interface can manage queues. Retrying mail/AI through River UI does not bypass the operation's guard against repeating an external effect.

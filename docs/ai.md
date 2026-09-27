@@ -1,10 +1,10 @@
-# AI-помощник
+# AI assistant
 
-Genkit Go выполняет один типизированный flow `notes_assistant_v1` с read-only tool `list_notes`. HTTP создаёт операцию и River job; worker получает ID, загружает владельца и вопрос, вызывает flow, затем сохраняет ответ. Страница `/tools` показывает пять последних запросов и опрашивает их состояние, пока работа не завершена.
+Genkit Go runs one typed flow, `notes_assistant_v1`, with the read-only `list_notes` tool. HTTP creates an operation and a River job. The worker receives the ID, loads the owner and question, calls the flow, and saves the answer. `/tools` shows the five latest requests and polls their state until work finishes.
 
-## Включение
+## Enable the assistant
 
-Приложение запускается с `AI_ENABLED=false` без API key. Для включения задайте в локальном `.env` или secrets deployment:
+The application starts with `AI_ENABLED=false` and no API key. To enable it, set these values in your local `.env` or deployment secrets:
 
 ```sh
 AI_ENABLED=true
@@ -15,25 +15,25 @@ AI_MAX_TURNS=3
 AI_MAX_OUTPUT_TOKENS=1024
 ```
 
-Указанный ID используется в локальных protocol tests; доступность конкретной модели в вашем аккаунте проверяется у провайдера. Для OpenAI используйте префикс `openai/` и ID Chat Completions модели с tools и structured output. Genkit-плагин в этой версии работает через Chat Completions; Responses-only модели ему не подходят. Ключ относится к выбранному провайдеру. После изменения конфигурации перезапустите server и worker.
+The model ID above is used in local protocol tests; check its availability with your provider and account. For OpenAI, use the `openai/` prefix and a Chat Completions model ID supporting tools and structured output. This Genkit plugin version uses Chat Completions; Responses-only models are incompatible. The key must belong to the selected provider. Restart the server and worker after configuration changes.
 
-При включении обязательны модель и ключ. Ошибка конфигурации останавливает процесс до HTTP-запроса к провайдеру. Создание клиента и запуск приложения не запускают генерацию. Пользователь видит перед отправкой, что его вопрос и заметки будут переданы AI-провайдеру.
+Enabling AI requires both a model and key. Invalid configuration stops the process before any provider HTTP request. Constructing the client and starting the application do not generate content. Before submission, the interface tells users that their question and notes will be sent to the AI provider.
 
-## Контракт и границы
+## Contract and boundaries
 
-- Вопрос: 1–500 Unicode-символов, JSON ограничен HTTP middleware.
-- Tool не принимает owner ID. На каждый вызов flow создаётся `ai.NewTool`, замыкающий доверенный ID операции. Чтение ограничено 50 последними заметками владельца, по 2000 символов каждая.
-- У tool нет записи, SMTP, shell, browser или произвольных URL. Текст заметок — данные, а не инструкции.
-- Prompt: `internal/assistant/prompts/notes-v1.txt`; `PromptVersion` хранится вместе с моделью в операции.
-- Output: обязательный `answer`, непустой plain text до 4000 символов. Успешный ответ без вызова инструмента отклоняется. React выводит текст, не HTML модели.
-- `AI_TIMEOUT`: 1s–5m, default 30s на весь flow; `AI_MAX_TURNS`: 1–10; `AI_MAX_OUTPUT_TOKENS`: 128–8192 на модельный вызов. Общая стоимость зависит от числа turns и входных заметок.
-- OpenAI SDK retries выключены. У используемого Gemini generate path нет автоматических HTTP retries; это проверяется тестом 503. River mail/AI также имеют одну попытку.
-- Raw provider errors не сохраняются в River и логах. В приложении остаётся обёрнутая причина для диагностики безопасными категориями. Тексты вопросов/ответов находятся только в owner-scoped таблице, не в queue payload или метриках.
+- Questions contain 1–500 Unicode characters; HTTP middleware limits the JSON body size.
+- The tool accepts no owner ID. Each flow invocation creates an `ai.NewTool` that closes over the trusted user ID loaded for the operation. Reads are limited to the owner's 50 latest notes, each up to 2000 characters.
+- The tool cannot write, send SMTP, run shell commands, browse, or fetch arbitrary URLs. Note text is data, not instructions.
+- The prompt is `internal/assistant/prompts/notes-v1.txt`; the operation stores `PromptVersion` alongside the model.
+- Output requires `answer`: nonempty plain text of at most 4000 characters. A successful answer without a tool call is rejected. React renders text, not model-generated HTML.
+- `AI_TIMEOUT` is 1s–5m, defaulting to 30s for the entire flow; `AI_MAX_TURNS` is 1–10; `AI_MAX_OUTPUT_TOKENS` is 128–8192 per model call. Total cost depends on the number of turns and input notes.
+- OpenAI SDK retries are disabled. The Gemini generate path used here has no automatic HTTP retries, verified with a 503 test. River mail/AI jobs also have one attempt.
+- Raw provider errors are not saved in River or logs. The application retains wrapped causes for diagnosis through safe categories. Questions and answers live only in the owner-scoped table, not queue payloads or metrics.
 
-Не подключайте Genkit telemetry/reflection к production-процессу по примеру dev quickstart: такие инструменты могут сохранять полный контент. `GENKIT_ENV`, `GENKIT_TELEMETRY_SERVER`, `GENKIT_REFLECTION_V2_SERVER` при включённом AI отклоняются. OTLP export, conversation memory, embeddings и multi-agent orchestration не настроены. Срок хранения вопросов/ответов определяется вашей продуктовой политикой; starter не удаляет их автоматически, кроме удаления аккаунта.
+Do not enable Genkit telemetry/reflection in production by copying a development quick start: those tools can retain full content. `GENKIT_ENV`, `GENKIT_TELEMETRY_SERVER`, and `GENKIT_REFLECTION_V2_SERVER` are rejected when AI is enabled. OTLP export, conversation memory, embeddings, and multi-agent orchestration are not configured. Define question/answer retention for your product; the starter does not remove them automatically except when the account is deleted.
 
-## Проверки
+## Validation
 
-`go test ./internal/assistant` проверяет schema, отсутствие доказательств, loop limit, provider outage, границу длины и HTTP-контракты обоих SDK, включая Gemini thought signature. PostgreSQL integration tests проверяют атомарность enqueue, изоляцию заметок, отмену после удаления аккаунта и отсутствие повторной генерации.
+`go test ./internal/assistant` checks the schema, missing evidence, loop limits, provider outages, length boundaries, and both SDK HTTP contracts, including Gemini thought signatures. PostgreSQL integration tests check atomic enqueue, note isolation, cancellation after account deletion, and prevention of duplicate generation.
 
-Эти проверки работают на синтетических данных и не тратят provider credits. Они доказывают контракты приложения, а не качество рассуждений реальной модели. Перед публикацией AI-функции выполните [набор оценок](../evals/notes-assistant.md) на выбранной модели; зафиксируйте её ID, prompt version, результаты, latency и стоимость по данным провайдера. Отсутствующий usage не считайте нулём.
+These checks use synthetic data and consume no provider credits. They verify application contracts, not a live model's reasoning quality. Before releasing the AI feature, run the [evaluation cases](../evals/notes-assistant.md) against your chosen model. Record its ID, prompt version, results, latency, and cost from provider data. Do not treat missing usage as zero.

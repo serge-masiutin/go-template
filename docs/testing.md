@@ -1,22 +1,22 @@
-# Проверки
+# Testing
 
-## Основной набор
+## Core checks
 
 ```sh
 mise exec -- bin/ci
 ```
 
-Включает форматирование Go, `go mod tidy -diff`, `go mod verify` для обоих модулей, `go vet`, `go test -race`, TypeScript, Vite build, Vitest, Storybook build и проверку skills. PostgreSQL для этого набора не нужен. Исходники frontend форматируются Prettier; проверка входит в CI.
+This runs Go formatting, `go mod tidy -diff` and `go mod verify` for both modules, `go vet`, `go test -race`, TypeScript checks, a Vite build, Vitest, a Storybook build, and skill validation. PostgreSQL is not required. Frontend source uses Prettier, and its formatting check is included.
 
-## PostgreSQL и браузер
+## PostgreSQL and browser tests
 
-Поднимите локальную БД через `bin/setup`, затем один раз создайте отдельную тестовую:
+Start the local database with `bin/setup`, then create a separate test database once:
 
 ```sh
 docker compose exec postgres createdb -U starter starter_test
 ```
 
-Если она уже существует, используйте её. Тестовые команды откажутся работать с именем БД без суффикса `_test`. Каждый запуск создаёт собственную схему и удаляет её после завершения; development-схема не затрагивается.
+Use the existing database if it has already been created. Test commands refuse database names without the `_test` suffix. Each run creates its own schema and removes it on completion; it does not touch the development schema.
 
 ```sh
 export TEST_DATABASE_URL='postgres://starter:local-development-only@127.0.0.1:5437/starter_test?sslmode=disable'
@@ -25,21 +25,20 @@ mise exec -- npx playwright install chromium
 mise exec -- bin/test-browser
 ```
 
-Предварительно выполните `bin/ci`, чтобы иметь актуальный manifest. `bin/test-browser` создаёт изолированную схему и синтетического администратора, запускает Playwright и удаляет схему. Порт 3100 должен быть свободен. `APP_ENV=test` использует собранные assets и игнорирует development hot file. В Linux для браузера могут потребоваться системные зависимости: `npx playwright install --with-deps chromium`.
+Run `bin/ci` first to build the current asset manifest. `bin/test-browser` creates an isolated schema and synthetic administrator, runs Playwright, and drops the schema. Port 3100 must be available. `APP_ENV=test` uses built assets and ignores the development hot file. On Linux, the browser may need system dependencies: `npx playwright install --with-deps chromium`.
 
-Integration tests проверяют миграции, вход, одноразовые ошибки форм, CSRF/его ротацию, межсайтовые запросы, строгий JSON, version mismatch, partial props, разделение заметок по владельцу, отзыв admin-права, logout и отсутствие мутаций при неподдерживаемой Precognition-валидации. Браузер проходит неудачный/успешный вход, валидацию заметки, создание, перезагрузку, удаление и выход; JS-ошибки приводят к падению.
+Integration tests cover migrations, sign-in, one-time form errors, CSRF and its rotation, cross-site requests, strict JSON, version mismatch, partial props, note ownership, admin-role revocation, logout, and rejection of mutations during unsupported Precognition validation. The browser suite covers failed and successful sign-in, note validation, creation, reload, deletion, and logout. JavaScript errors fail the test.
 
-## Изменение контрактов
+## Changing contracts
 
-Тестируйте публичное поведение и негативные сценарии. SQL/session/authorization проверяйте с настоящим PostgreSQL. Ошибки типов и браузерный сценарий дополняют Go-тесты, а не заменяют их. Для новой deferred-функции добавьте отказ загрузки, retry и повторную авторизацию; для файлов — фактический multipart payload и лимиты.
+Test public behavior and failure cases. Check SQL, sessions, and authorization against real PostgreSQL. Type checks and browser flows complement Go tests. For a new deferred feature, add loading failure, retry, and renewed authorization checks; for uploads, test actual multipart payloads and limits.
 
-GitHub Actions выполняет оба набора и собирает Docker image. Отдельный `bin/tool govulncheck ./...` также выполняется в GitHub Actions. В основной набор не входят нагрузочные испытания, production smoke на вашем хостинге и платные генерации реальных AI-провайдеров.
+GitHub Actions runs both suites and builds the Docker image. It also runs `bin/tool govulncheck ./...` separately. The core suite does not include load tests, production smoke tests on your hosting platform, or paid generation against live AI providers.
 
+## Queues, email, and AI
 
-## Очередь, почта и AI
+`go test ./internal/assistant ./internal/mailing` uses synthetic data, local HTTP/SMTP servers, and a fake model to verify contracts. It covers tool-loop limits, the output schema, rejection of answers without reading notes, Gemini thought signatures, authentication headers, token budgets, and no HTTP retry after 503. It sends no real email and makes no paid generation calls.
 
-`go test ./internal/assistant ./internal/mailing` использует синтетические данные, локальные HTTP/SMTP-серверы и фальшивую модель для проверки контрактов. Проверяются tool loop limit, схема ответа, отсутствие ответа без чтения заметок, Gemini thought signature, auth headers, token budget и отсутствие HTTP retry при 503. Никакие реальные письма или платные генерации не выполняются.
+The PostgreSQL suite also checks accepted legacy migration history, rollback when enqueue fails, concurrent requests, owner scope, duplicate execution, account deletion, a real River worker, failure cleanup, and reconciliation after a crash. Metrics tests cover Bearer access and the exclusion of user content.
 
-PostgreSQL-набор дополнительно проверяет принятие legacy migration history, rollback записи при ошибке enqueue, конкурентную постановку, owner scope, двойной запуск, удаление аккаунта, работу настоящего River worker, failure cleanup и reconciliation после аварии. Метрики проверяются на Bearer-доступ и отсутствие пользовательского контента.
-
-Качество ответов реальной модели — отдельная [оценка](../evals/notes-assistant.md). HTTP fixtures не доказывают качество модели. `govulncheck` может отмечать неиспользуемые подпакеты внутри модулей: оценивайте отдельно reachable symbols, imported packages и module-only findings; не называйте их одним числом.
+Live-model answer quality has a separate [evaluation procedure](../evals/notes-assistant.md). HTTP fixtures do not establish model quality. `govulncheck` may report unused subpackages within modules: distinguish reachable symbols, imported packages, and module-only findings rather than combining them into one count.
