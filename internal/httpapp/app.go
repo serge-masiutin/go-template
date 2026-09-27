@@ -170,12 +170,12 @@ func (a *App) security(cfg config.Config, next http.Handler) http.Handler {
 }
 
 func (a *App) user(w http.ResponseWriter, r *http.Request) (accounts.User, bool) {
-	id := a.sessions.GetInt64(r.Context(), "userID")
-	if id == 0 {
+	token := a.sessions.Token(r.Context())
+	if token == "" {
 		a.inertia.Redirect(w, r, "/login", http.StatusSeeOther)
 		return accounts.User{}, false
 	}
-	user, err := a.accounts.Find(r.Context(), id)
+	user, err := a.accounts.FindBySession(r.Context(), token)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		if err := a.sessions.Destroy(r.Context()); err != nil {
 			a.fail(w, r, err)

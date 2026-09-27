@@ -32,3 +32,7 @@ The server and worker need consistent MAIL/AI settings as described in [email](b
 The runtime pool budget applies per process. The worker also opens one LISTEN/NOTIFY connection with the same search path. With PgBouncer, LISTEN requires session pooling or a direct connection. The starter currently uses one DSN, so transaction pooling is not supported for the worker.
 
 `/health/ready` checks the web process and database, not worker health. Supervise the worker as a separate service and monitor its exit status and queue growth. Compose binds River UI and Mailpit to loopback for development. A production River UI needs its own authentication and network-access configuration.
+
+## Session revocation upgrade
+
+Migration `003_login_sessions.sql` separates authentication grants from SCS data. Apply migrations before starting the updated server. Existing cookies have no grant and require a fresh sign-in; no old `userID` session value is promoted to authorization. Replace all old server instances before relying on the new revocation contract, since old binaries still trust SCS data. Keep the new table when rolling back application code, and treat rollback to the old authorization code as restoring the original concurrency defect.

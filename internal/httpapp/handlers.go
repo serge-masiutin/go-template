@@ -54,16 +54,25 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, r, err)
 		return
 	}
+	previousToken := a.sessions.Token(r.Context())
 	if err := a.sessions.RenewToken(r.Context()); err != nil {
 		a.fail(w, r, err)
 		return
 	}
-	a.sessions.Put(r.Context(), "userID", user.ID)
+	if err := a.accounts.CreateLoginSession(r.Context(), user.ID, a.sessions.Token(r.Context()), previousToken, a.sessions.Deadline(r.Context())); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	a.sessions.Remove(r.Context(), "userID")
 	a.sessions.Remove(r.Context(), "csrf")
 	a.inertia.Redirect(w, r.WithContext(inertia.ClearHistory(r.Context())), "/", http.StatusSeeOther)
 }
 
 func (a *App) logout(w http.ResponseWriter, r *http.Request) {
+	if err := a.accounts.RevokeSession(r.Context(), a.sessions.Token(r.Context())); err != nil {
+		a.fail(w, r, err)
+		return
+	}
 	if err := a.sessions.Destroy(r.Context()); err != nil {
 		a.fail(w, r, err)
 		return

@@ -27,7 +27,7 @@ mise exec -- bin/test-browser
 
 Run `bin/ci` first to build the current asset manifest. `bin/test-browser` creates an isolated schema and synthetic administrator, runs Playwright, and drops the schema. Port 3100 must be available. `APP_ENV=test` uses built assets and ignores the development hot file. On Linux, the browser may need system dependencies: `npx playwright install --with-deps chromium`.
 
-Integration tests cover migrations, sign-in, one-time form errors, CSRF and its rotation, cross-site requests, strict JSON, version mismatch, partial props, note ownership, admin-role revocation, logout, and rejection of mutations during unsupported Precognition validation. The browser suite covers failed and successful sign-in, note validation, creation, reload, deletion, and logout. JavaScript errors fail the test.
+Integration tests cover a delayed SCS commit racing with logout across independent handlers, login grant rotation/expiry/revocation, migrations, sign-in, one-time form errors, CSRF and its rotation, cross-site requests, strict JSON, version mismatch, partial props, note ownership, admin-role revocation, logout, and rejection of mutations during unsupported Precognition validation. The browser suite covers failed and successful sign-in, note validation, creation, reload, deletion, and logout. JavaScript errors fail the test.
 
 ## Changing contracts
 

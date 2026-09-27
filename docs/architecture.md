@@ -25,7 +25,7 @@ When an operation coordinates multiple records and invariants, extract a named u
 | --- | --- |
 | `GET /login` | Sign-in form |
 | `POST /login` | Verify password, rotate session ID and CSRF token, redirect to `/` with 303 |
-| `POST /logout` | Destroy session, clear Inertia history, redirect to `/login` with 303 |
+| `POST /logout` | Revoke the login grant, destroy session data, clear Inertia history, redirect to `/login` with 303 |
 | `GET /` | Sign-in required; up to 50 latest notes belonging to the current user |
 | `POST /notes` | 1–2000 Unicode characters after trimming; owner comes from the session |
 | `DELETE /notes/{id}` | Delete the user's own note; another user's or missing note returns 404 |
@@ -45,7 +45,9 @@ Public IDs serialize as strings. Password hashes, cookies, and private configura
 
 ## Sessions and operations
 
-SCS stores sessions in PostgreSQL with a 24-hour absolute lifetime and a two-hour idle timeout. Cookies use Secure in production; HttpOnly and SameSite=Lax apply in every environment. Protected admin requests read the current role from the database.
+SCS stores sessions in PostgreSQL with a 24-hour absolute lifetime and a two-hour idle timeout. Cookies use Secure in production; HttpOnly and SameSite=Lax apply in every environment. Protected requests also require a nonexpired `login_sessions` grant, created only after password verification and token rotation. The grant stores a SHA-256 token digest, user ID, and absolute expiry. Logout deletes it before destroying SCS data. A concurrent SCS commit may restore old flash/data, but cannot restore authorization. Requests authorized before logout may finish; new requests with that cookie cannot authenticate. Admin requests read the current role from the database.
+
+Sign-in removes expired grants and the previous token's grant in the same transaction that creates the new grant. Database errors fail the request. A failed SCS commit can leave an unreachable grant; its absolute expiry limits retention and the next sign-in reclaims it. Deleting an account removes its grants through a foreign key.
 
 Sign-in is limited to ten attempts per minute per direct connection address; the limiter holds at most 4096 addresses. Forwarded headers are not trusted as the source IP. A reverse proxy may make the address shared: configure limits at the public ingress and consider a shared limit across application instances.
 
