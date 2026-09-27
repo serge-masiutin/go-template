@@ -1,5 +1,7 @@
 # Third-party materials
 
+- `design-system`: [Yuri Mandrikov / ai-design-system](https://github.com/ymandrikov/ai-design-system/tree/05e0a9ede21cd5e66f5293164e14f6cd3f441dd0), [MIT](third_party/licenses/ai-design-system.txt). All 31 skill files match both this author revision and the preserved Evil Martians catalog payload; provenance is recorded in `config/skills-lock.json`.
+
 - `data-systems-architecture`: an original standalone synthesis based on Martin Kleppmann and Chris Riccomini's *Designing Data-Intensive Applications*, second edition. [Sources and coverage](.agents/skills/data-systems-architecture/SOURCES.md) record attribution and limitations. The source book and its illustrations are not included; the template license does not license the book.
 
 - Project foundation and local source skills: [serge-masiutin/rails-template](https://github.com/serge-masiutin/rails-template), MIT. Exact revisions are recorded in [skills-lock.json](config/skills-lock.json).

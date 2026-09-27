@@ -495,6 +495,14 @@
         "scripts/check-contract.mjs": "961e15907de9a9c2dcd036857869b51847ea61bb5d3e566680829f078216acfc",
         "scripts/check-staged-contracts.mjs": "1c315774bd1741c750425cb0ff54e739813d089e7b1dc72e85934f39d683ed22",
         "scripts/generate-indexes.mjs": "d9276201a2124d0be6676546692330966c7284d7eefdff5c2ec521ea23a7f5fa"
+      },
+      "source": {
+        "repository": "https://github.com/ymandrikov/ai-design-system",
+        "commit": "05e0a9ede21cd5e66f5293164e14f6cd3f441dd0",
+        "path": "skills/design-system",
+        "license": "third_party/licenses/ai-design-system.txt",
+        "licenseSha256": "32378a9816b9356551eb66cba4f0ca3b97e879f81079b2bebc1d464d03feba97",
+        "note": "All skill files match this author revision and the preserved Evil Martians catalog payload byte for byte."
       }
     },
     {

@@ -2,6 +2,18 @@
 
 The repository includes 32 skills in `.agents/skills`. They are copied with the GitHub template and available to agents working on the project. The template does not provide a separate skill website, discovery endpoint, or installer that changes global agent settings.
 
+## Design system
+
+The bundled [design-system](../.agents/skills/design-system/SKILL.md) comes from
+[Yuri Mandrikov's ai-design-system](https://github.com/ymandrikov/ai-design-system/tree/05e0a9ede21cd5e66f5293164e14f6cd3f441dd0/skills/design-system),
+under the [MIT license](../third_party/licenses/ai-design-system.txt). All 31 files match
+the author's pinned revision and the existing Evil Martians catalog copy byte for byte.
+
+Use `$design-system` for component selection, contracts, tokens, and source drift checks.
+It complements the `sb-*` skills, which supply Storybook stories and visual evidence.
+Connecting a project's design sources and generating contracts is a separate `setup`
+workflow; the template includes the skill without prefilled `DESIGN.md` or contracts.
+
 ## Data systems architecture
 
 Use [data-systems-architecture](../.agents/skills/data-systems-architecture/SKILL.md) to review data invariants, transaction boundaries, queues, retries, schema evolution, and recovery. It complements `layered-go`: package organization and data correctness are related but distinct concerns. Start from a concrete operation and load only the relevant bundled chapters.

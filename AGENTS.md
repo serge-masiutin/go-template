@@ -22,6 +22,7 @@
 | Pages, routes, forms | `docs/architecture.md` | `inertia-go-architecture`, then the relevant `inertia-go-*` |
 | JSON and TypeScript | `docs/architecture.md` | `go-serialization`, `inertia-go-typescript` |
 | Components and Storybook | `docs/development.md` | `tailwind-best-practices`, `sb-hub`, then the relevant `sb-*` |
+| Design system contracts and UI reuse | `docs/skills.md#design-system` | `design-system`, then the relevant `sb-*` for Storybook evidence |
 | Testing | `docs/testing.md` | `inertia-go-testing` |
 | Setup and infrastructure | `docs/development.md`, `docs/deployment.md` | `inertia-go-setup` |
 | Slow startup | `docs/development.md` | `go-boot-profiling` |
