@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"time"
 
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/pressly/goose/v3/lock"
 	"github.com/riverqueue/river/riverdriver/riverdatabasesql"
@@ -24,7 +25,13 @@ func Migrate(ctx context.Context, db *DB) (result error) {
 	if err != nil {
 		return err
 	}
-	conn, err := db.SQL.Conn(ctx)
+	// Session locks must live on a dedicated physical connection. A pooled
+	// stdlib connection's Close only releases it back to pgxpool.
+	lockDB := stdlib.OpenDB(*db.Pool.Config().ConnConfig.Copy())
+	lockDB.SetMaxOpenConns(1)
+	lockDB.SetMaxIdleConns(0)
+	defer lockDB.Close()
+	conn, err := lockDB.Conn(ctx)
 	if err != nil {
 		return err
 	}
@@ -36,7 +43,7 @@ func Migrate(ctx context.Context, db *DB) (result error) {
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer cancel()
 		if err := locker.SessionUnlock(cleanup, conn); err != nil {
-			// Never return a possibly locked PostgreSQL session to the application pool.
+			// This dedicated driver closes the physical session, releasing any remaining lock.
 			conn.Raw(func(any) error { return driver.ErrBadConn })
 			result = errors.Join(result, err)
 		}

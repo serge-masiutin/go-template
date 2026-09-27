@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/serge-masiutin/go-template/internal/database"
 	"github.com/serge-masiutin/go-template/internal/testdb"
@@ -45,5 +46,27 @@ func TestUnknownLegacyHistoryFails(t *testing.T) {
 	}
 	if err := database.Migrate(context.Background(), db); err == nil {
 		t.Fatal("unknown legacy history was silently adopted")
+	}
+}
+
+func TestConcurrentMigratorsShareDeploymentLock(t *testing.T) {
+	db := testdb.Open(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	results := make(chan error, 2)
+	for range 2 {
+		go func() { results <- database.Migrate(ctx, db) }()
+	}
+	for range 2 {
+		if err := <-results; err != nil {
+			t.Error(err)
+		}
+	}
+	if t.Failed() {
+		return
+	}
+	var applied int
+	if err := db.QueryRow(ctx, "SELECT count(*) FROM goose_db_version WHERE version_id IN (1,2) AND is_applied").Scan(&applied); err != nil || applied != 2 {
+		t.Fatalf("migration history inconsistent: count=%d err=%v", applied, err)
 	}
 }
