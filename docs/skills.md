@@ -11,8 +11,9 @@ the author's pinned revision and the existing Evil Martians catalog copy byte fo
 
 Use `$design-system` for component selection, contracts, tokens, and source drift checks.
 It complements the `sb-*` skills, which supply Storybook stories and visual evidence.
-Connecting a project's design sources and generating contracts is a separate `setup`
-workflow; the template includes the skill without prefilled `DESIGN.md` or contracts.
+The template is connected through [DESIGN.md](../DESIGN.md), with public contracts,
+token roles, generated indexes and `bin/design-system-check` in CI. Follow the
+existing connection when adding or changing components; no initial setup is required.
 
 ## Data systems architecture
 

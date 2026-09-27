@@ -3,10 +3,17 @@
 ## Core checks
 
 ```sh
+mise exec -- npx playwright install chromium
 mise exec -- bin/ci
 ```
 
-This runs Go formatting, `go mod tidy -diff` and `go mod verify` for both modules, `go vet`, `go test -race`, TypeScript checks, a Vite build, Vitest, a Storybook build, and skill validation. PostgreSQL is not required. Frontend source uses Prettier, and its formatting check is included.
+This runs Go formatting, `go mod tidy -diff` and `go mod verify` for both modules, `go vet`, `go test -race`, TypeScript checks, a Vite build, Vitest, a Storybook build, Chromium story interaction/accessibility tests, design-system contract/index validation, and skill validation. PostgreSQL is not required. Install Chromium once after installing npm dependencies; Linux CI uses `npx playwright install --with-deps chromium`. Frontend source uses Prettier, and its formatting check is included.
+
+## Component and catalog checks
+
+`mise exec -- npm run test` exercises native field semantics and error relationships in jsdom. `mise exec -- npm run test:storybook` runs every story in Chromium through the Storybook Vitest addon, including keyboard interactions, the 320 px workspace layout, and accessibility checks. `parameters.a11y.test: "error"` makes axe violations fail the command. The separate browser config loads the same Tailwind processing, CSS and fonts as the catalog; the CssCheck story detects missing CSS.
+
+`mise exec -- bin/design-system-check` validates contracts, source snapshots, links and generated indexes against [DESIGN.md](../DESIGN.md). It does not replace runtime tests or visual inspection. Browser-based axe checks complement manual keyboard and layout review; they do not prove every accessibility requirement.
 
 ## PostgreSQL and browser tests
 
@@ -27,7 +34,7 @@ mise exec -- bin/test-browser
 
 Run `bin/ci` first to build the current asset manifest. `bin/test-browser` creates an isolated schema and synthetic administrator, runs Playwright, and drops the schema. Port 3100 must be available. `APP_ENV=test` uses built assets and ignores the development hot file. On Linux, the browser may need system dependencies: `npx playwright install --with-deps chromium`.
 
-Integration tests cover a delayed SCS commit racing with logout across independent handlers, login grant rotation/expiry/revocation, migrations, sign-in, one-time form errors, CSRF and its rotation, cross-site requests, strict JSON, version mismatch, partial props, note ownership, admin-role revocation, logout, and rejection of mutations during unsupported Precognition validation. The browser suite covers failed and successful sign-in, note validation, creation, reload, deletion, and logout. JavaScript errors fail the test.
+Integration tests cover a delayed SCS commit racing with logout across independent handlers, login grant rotation/expiry/revocation, migrations, sign-in, one-time form errors, CSRF and its rotation, cross-site requests, strict JSON, version mismatch, partial props, note ownership, admin-role revocation, logout, and rejection of mutations during unsupported Precognition validation. The browser suite covers failed and successful sign-in, accessible field-error descriptions and clearing, note validation, creation, reload, deletion, narrow viewport overflow, and logout. JavaScript errors fail the test.
 
 ## Changing contracts
 

@@ -4,6 +4,8 @@ import { WorkStatus } from "./WorkStatus";
 const meta = {
   title: "Feedback/WorkStatus",
   component: WorkStatus,
+  tags: ["autodocs"],
+  parameters: { layout: "centered" },
   args: { state: "queued" },
   argTypes: {
     state: {
@@ -18,3 +20,5 @@ export const Queued: Story = {};
 export const Working: Story = { args: { state: "running" } };
 export const Completed: Story = { args: { state: "completed" } };
 export const Failed: Story = { args: { state: "failed" } };
+export const Sending: Story = { args: { state: "sending" } };
+export const Sent: Story = { args: { state: "sent" } };

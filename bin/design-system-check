@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+shopt -s nullglob
+node .agents/skills/design-system/scripts/generate-indexes.mjs --check .
+for kind in component layout pattern; do
+  contracts=(design-system/"${kind}s"/*.md)
+  if ((${#contracts[@]})); then
+    node .agents/skills/design-system/scripts/check-contract.mjs --kind "$kind" "${contracts[@]}"
+  fi
+done

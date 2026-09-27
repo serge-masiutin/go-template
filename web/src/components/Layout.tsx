@@ -17,7 +17,10 @@ export function Layout({
         <Link href="/" className="font-semibold">
           Go Template
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-4 text-sm">
+        <nav
+          aria-label="Main"
+          className="flex flex-wrap items-center gap-4 text-sm"
+        >
           <Link href="/tools">Note tools</Link>
           {user.admin && <Link href="/admin">Admin</Link>}
           <Form

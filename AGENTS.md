@@ -1,5 +1,7 @@
 # Go Template: agent contract
 
+- For design-system work, start at [DESIGN.md](DESIGN.md) and follow [design-system](.agents/skills/design-system/SKILL.md) for contracts and reuse.
+
 - Write project documentation, code comments, technical messages, and skill instructions in English. Respond to the user in their requested language. `clear-writing` has complete Russian and English editions and selects the guide by the target text's language.
 - Read related files, `go.mod`, `package-lock.json`, and the relevant guide before editing. Update a contract and all its consumers together.
 - Stack: Go `net/http`, Gonertia v3, GORM generics/pgx, Goose, SCS, River, go-mail, Genkit; React, TypeScript, Vite, Tailwind, Storybook. The server owns routes, access, and data; React owns presentation and local interactions.

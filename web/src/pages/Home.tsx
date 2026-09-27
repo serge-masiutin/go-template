@@ -2,7 +2,7 @@ import { Form, Head, router, usePage } from "@inertiajs/react";
 import type { Note, User } from "../types";
 import { Layout } from "../components/Layout";
 import { Button } from "../components/Button";
-import { Notice } from "../components/Notice";
+import { Field } from "../components/Field";
 
 export default function Home({ user, notes }: { user: User; notes: Note[] }) {
   const { csrfToken } = usePage().props;
@@ -24,18 +24,16 @@ export default function Home({ user, notes }: { user: User; notes: Note[] }) {
         >
           {({ errors, processing }) => (
             <>
-              <label htmlFor="body" className="block text-sm font-medium">
-                New note
-              </label>
-              <textarea
+              <Field
+                multiline
                 id="body"
                 name="body"
+                label="New note"
                 required
                 maxLength={2000}
                 rows={4}
-                className="w-full rounded-md border border-border bg-panel p-3"
+                error={errors.body}
               />
-              {errors.body && <Notice>{errors.body}</Notice>}
               <Button type="submit" disabled={processing}>
                 Add note
               </Button>

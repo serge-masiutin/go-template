@@ -55,7 +55,7 @@ Connect to the local database with `docker compose exec postgres psql -U starter
 
 ## Components
 
-Styles and semantic tokens live in `web/src/styles.css`; base components live in `web/src/components`. Tailwind scans only `web/src` so documentation and skills do not affect CSS. `npm run storybook` serves the catalog on port 6006; `npm run build:storybook` builds it into `storybook-static`. The catalog is excluded from the production image. Storybook does not create the application's Vite hot file.
+Start with [DESIGN.md](../DESIGN.md) for token meanings, component contracts and composition rules. Styles and semantic tokens live in `web/src/styles.css`; base components live in `web/src/components`. `Field` owns visible labels and hint/error associations for native input and textarea controls; the containing Inertia form owns validation, request headers and submission state. Tailwind scans only `web/src` so documentation and skills do not affect CSS. `npm run storybook` serves the catalog on port 6006; `npm run build:storybook` builds it into `storybook-static`. Stories remain colocated as `web/src/components/*.stories.tsx`. `npm run test:storybook` runs their interaction and accessibility checks in Chromium; see [testing](testing.md#component-and-catalog-checks). The catalog is excluded from the production image. Storybook does not create the application's Vite hot file.
 
 shadcn is not installed. If you add it, use `shadcn-inertia` while preserving CSRF, actual JSON types, and CSP. For component work, use the original EM `sb-*` and `tailwind-best-practices` skills.
 

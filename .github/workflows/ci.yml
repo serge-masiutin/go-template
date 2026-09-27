@@ -38,10 +38,10 @@ jobs:
           node-version: 24.21.0
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: bin/ci
       - run: bin/tool govulncheck ./...
       - run: go test -race -tags=integration ./...
-      - run: npx playwright install --with-deps chromium
       - run: bin/test-browser
       - run: docker build -t go-template:ci .
       - name: Smoke test production container

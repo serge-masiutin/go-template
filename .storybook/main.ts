@@ -2,7 +2,11 @@ import type { StorybookConfig } from "@storybook/react-vite";
 const config: StorybookConfig = {
   core: { disableTelemetry: true },
   stories: ["../web/src/**/*.stories.tsx"],
-  addons: ["@storybook/addon-a11y", "@storybook/addon-docs"],
+  addons: [
+    "@storybook/addon-a11y",
+    "@storybook/addon-docs",
+    "@storybook/addon-vitest",
+  ],
   framework: "@storybook/react-vite",
   async viteFinal(config) {
     // Storybook must not point the Go server at an unrelated development server.

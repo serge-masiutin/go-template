@@ -6,5 +6,5 @@
     "resolveJsonModule": true, "isolatedModules": true,
     "paths": {"@/*": ["./web/src/*"]}
   },
-  "include": ["web/src", ".storybook", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "tests/browser"]
+  "include": ["web/src", ".storybook", "vite.config.ts", "vitest.config.ts", "vitest.storybook.config.ts", "playwright.config.ts", "tests/browser"]
 }

@@ -2,6 +2,7 @@ import { Form, Head, usePage, usePoll } from "@inertiajs/react";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
 import { Button } from "../components/Button";
+import { Field } from "../components/Field";
 import { Notice } from "../components/Notice";
 import { WorkStatus } from "../components/WorkStatus";
 import type { AssistantRun, NoteEmail, User } from "../types";
@@ -117,21 +118,16 @@ export default function Tools({
               >
                 {({ processing, errors }) => (
                   <>
-                    <label
-                      htmlFor="question"
-                      className="block text-sm font-medium"
-                    >
-                      Your question
-                    </label>
-                    <textarea
+                    <Field
+                      multiline
                       id="question"
                       name="question"
+                      label="Your question"
                       rows={3}
                       required
                       maxLength={500}
-                      className="w-full rounded-md border border-border bg-panel p-3"
+                      error={errors.question}
                     />
-                    {errors.question && <Notice>{errors.question}</Notice>}
                     <Button type="submit" disabled={processing || aiPending}>
                       Ask assistant
                     </Button>

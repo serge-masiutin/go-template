@@ -1,6 +1,6 @@
 import { Form, Head, usePage } from "@inertiajs/react";
 import { Button } from "../components/Button";
-import { Notice } from "../components/Notice";
+import { Field } from "../components/Field";
 
 export default function Login() {
   const { csrfToken } = usePage().props;
@@ -21,33 +21,23 @@ export default function Login() {
         >
           {({ errors, processing }) => (
             <>
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="username"
-                  required
-                  className="w-full rounded-md border border-border px-3 py-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full rounded-md border border-border px-3 py-2"
-                />
-              </div>
-              {errors.email && <Notice>{errors.email}</Notice>}
+              <Field
+                id="email"
+                name="email"
+                label="Email"
+                type="email"
+                autoComplete="username"
+                required
+                error={errors.email}
+              />
+              <Field
+                id="password"
+                name="password"
+                label="Password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
               <Button type="submit" disabled={processing}>
                 {processing ? "Signing in…" : "Sign in"}
               </Button>

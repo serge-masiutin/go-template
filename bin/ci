@@ -12,4 +12,6 @@ npx prettier --check web/src .storybook tests/browser '*.ts' 'scripts/*.mjs'
 npm run build
 npm run test
 npm run build:storybook
+npm run test:storybook
+bin/design-system-check
 node scripts/check-skills.mjs

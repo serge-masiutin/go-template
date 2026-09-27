@@ -4,6 +4,7 @@ const meta = {
   title: "UI/Notice",
   component: Notice,
   tags: ["autodocs"],
+  parameters: { layout: "padded" },
   args: { children: "Write a note with 1 to 2000 characters." },
 } satisfies Meta<typeof Notice>;
 export default meta;
