@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import Tools from "./pages/Tools";
 import "./styles.css";
 import "./types";
 
-const pages = { Login, Home, Admin };
+const pages = { Login, Home, Admin, Tools };
 
 createInertiaApp({
   resolve(name) {

@@ -47,7 +47,7 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("database connection failed: %w", err)
 	}
 	defer pool.Close()
-	sessionStore := pgxstore.New(pool)
+	sessionStore := pgxstore.New(pool.Pool)
 	defer sessionStore.StopCleanup()
 	sessions := scs.New()
 	sessions.Store = sessionStore

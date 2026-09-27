@@ -4,7 +4,7 @@ This replaces Active Delivery's channel registry and dynamic methods with explic
 
 ## Setup and Basic Usage
 
-Define the message the use case needs and a narrow delivery interface at its consumer. Wire the actual SMTP/HTTP adapter in the composition root. The starter has no delivery provider installed.
+Define the message the use case needs and a narrow delivery interface at its consumer. Wire the actual SMTP/HTTP adapter in the composition root. The starter uses `internal/mailing` (go-mail SMTP), `notemail.Service`, and River. Local delivery goes to the explicitly configured Mailpit sink; production requires its own SMTP configuration.
 
 ## Deliver Now and Deliver Later
 

@@ -2,24 +2,30 @@ package database
 
 import (
 	"context"
-	"embed"
+	"database/sql"
 	"fmt"
-	"io/fs"
-	"sort"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-//go:embed migrations/*.sql
-var migrations embed.FS
+// DB owns one pgx connection pool. SQL and ORM share its connection budget.
+type DB struct {
+	*pgxpool.Pool
+	SQL *sql.DB
+	ORM *gorm.DB
+}
 
-func Open(ctx context.Context, connectionString string, maxConnections int32) (*pgxpool.Pool, error) {
-	config, err := pgxpool.ParseConfig(connectionString)
+func Open(ctx context.Context, connectionString string, maxConnections int32) (*DB, error) {
+	cfg, err := pgxpool.ParseConfig(connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("parse database configuration: %w", err)
 	}
-	config.MaxConns = maxConnections
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	cfg.MaxConns = maxConnections
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -27,45 +33,22 @@ func Open(ctx context.Context, connectionString string, maxConnections int32) (*
 		pool.Close()
 		return nil, fmt.Errorf("connect database: %w", err)
 	}
-	return pool, nil
+	// OpenDBFromPool disables idle SQL connections so SCS and pgx can share the pool.
+	sqlDB := stdlib.OpenDBFromPool(pool)
+	orm, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{
+		DisableAutomaticPing:   true,
+		SkipDefaultTransaction: true,           // Each single-statement write is atomic; operations open explicit transactions.
+		Logger:                 logger.Discard, // SQL and driver errors can contain passwords, addresses and note bodies.
+	})
+	if err != nil {
+		sqlDB.Close()
+		pool.Close()
+		return nil, err
+	}
+	return &DB{Pool: pool, SQL: sqlDB, ORM: orm}, nil
 }
 
-// Migrate serializes deploys and commits all pending schema changes atomically.
-func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock(724319)"); err != nil {
-		return err
-	}
-	if _, err := tx.Exec(ctx, "CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY)"); err != nil {
-		return err
-	}
-	files, err := fs.Glob(migrations, "migrations/*.sql")
-	if err != nil {
-		return err
-	}
-	sort.Strings(files)
-	for _, name := range files {
-		var applied bool
-		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE name=$1)", name).Scan(&applied); err != nil {
-			return err
-		}
-		if applied {
-			continue
-		}
-		sql, err := migrations.ReadFile(name)
-		if err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, string(sql)); err != nil {
-			return fmt.Errorf("migration %s: %w", name, err)
-		}
-		if _, err := tx.Exec(ctx, "INSERT INTO schema_migrations(name) VALUES($1)", name); err != nil {
-			return err
-		}
-	}
-	return tx.Commit(ctx)
+func (db *DB) Close() {
+	db.SQL.Close()
+	db.Pool.Close()
 }

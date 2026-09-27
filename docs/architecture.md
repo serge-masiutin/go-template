@@ -5,13 +5,17 @@ Go владеет URL, аутентификацией, авторизацией 
 ## Границы
 
 - `cmd/server`: конфигурация, пул БД, session store, HTTP-сервер и завершение по сигналу.
+- `cmd/worker`: River queues, отдельный LISTEN/NOTIFY connection, mail/AI adapters и graceful drain.
 - `cmd/manage`: миграции и создание пользователя через тот же пакет `accounts`.
-- `internal/accounts`, `internal/notes`: типизированные данные, валидация и SQL конкретной функции. Маленькому CRUD не нужны пустые service/repository/domain слои.
+- `internal/accounts`, `internal/notes`: типизированные данные, валидация и GORM queries конкретной функции. Маленькому CRUD не нужны пустые service/repository/domain слои.
 - `internal/httpapp`: маршруты, строгий декодер, CSRF, HTTP-авторизация, Inertia и session flash.
-- `internal/database`: подключение и транзакционные миграции с advisory lock.
+- `internal/database`: один pgx pool с SQL/GORM adapters; Goose и River migrations под deploy lock.
+- `internal/notemail`, `internal/assistant`: явные операции, записи состояния, транзакционный enqueue и внешние adapters.
+- `internal/background`: типизированные River workers, failure cleanup и периодическая сверка.
+- `internal/observability`: Prometheus exporter с ограниченными labels.
 - `web/src`: страницы, компоненты, DTO TypeScript и стили. `web/src/types.ts` — общие типы и единственное расширение `InertiaConfig`.
 
-При появлении операции, которая координирует несколько записей и инвариантов, выделяйте именованный use case и явно задавайте транзакцию. Переносите проверки доступа в общий контракт операции, если она вызывается не только из HTTP. Внешние эффекты требуют отдельной гарантии доставки после commit; обычная goroutine её не даёт. Очереди и outbox в starter не установлены.
+При появлении операции, которая координирует несколько записей и инвариантов, выделяйте именованный use case и явно задавайте транзакцию. Переносите проверки доступа в общий контракт операции, если она вызывается не только из HTTP. Внешние эффекты требуют отдельной гарантии доставки после commit; обычная goroutine её не даёт. River `InsertTx` сохраняет delivery intent вместе с данными операции. Подробности — [очередь и почта](background.md), [AI](ai.md).
 
 ## HTTP-контракт
 
@@ -24,6 +28,10 @@ Go владеет URL, аутентификацией, авторизацией 
 | `POST /notes` | 1–2000 Unicode-символов после trim; владелец берётся из сессии |
 | `DELETE /notes/{id}` | Удаление только своей заметки; чужая/отсутствующая — 404 |
 | `GET /admin` | Повторная проверка `admin` в БД; число пользователей |
+| `GET /tools` | Свои почтовые и AI-операции, текущая доступность функций |
+| `POST /tools/email` | Вход обязателен; письмо только себе, одна активная операция |
+| `POST /tools/assistant` | Вход обязателен; 1–500 символов, одна активная операция |
+| `GET /metrics` | Только при настроенном Bearer token, без session-аутентификации |
 | `GET /health/live` | Процесс отвечает |
 | `GET /health/ready` | PostgreSQL отвечает в пределах двух секунд |
 
@@ -43,4 +51,11 @@ Production игнорирует Vite hot file, использует manifest и 
 
 ## Как развивать
 
-`layered-go` сохраняет методику оригинального `layered-rails`, но заменяет framework-механизмы на Go-контракты. Четыре концептуальных слоя не требуют четырёх деревьев каталогов. Для Inertia-функций начните с `inertia-go-architecture`, затем загрузите профильный skill. Поддержку deferred, uploads, шадcn, уведомлений и других возможностей добавляйте вместе с обработкой ошибок и тестами; их примеры не означают, что они установлены.
+`layered-go` сохраняет методику оригинального `layered-rails`, но заменяет framework-механизмы на Go-контракты. Четыре концептуальных слоя не требуют четырёх деревьев каталогов. Для Inertia-функций начните с `inertia-go-architecture`, затем загрузите профильный skill. Поддержку deferred, uploads, shadcn, новых каналов уведомлений и других возможностей добавляйте вместе с обработкой ошибок и тестами; их примеры не означают, что они установлены.
+
+
+## Persistence и фоновые эффекты
+
+GORM records и публичные DTO отделены: password hash не является полем `accounts.User`, для фоновых операций выбираются только публичные поля, которые явно переводятся в DTO. Не принимайте ORM records напрямую из HTTP. GORM query fragments, таблицы и sort expressions принадлежат серверу; пользовательские значения передаются bind-параметрами.
+
+GORM `Transaction` предоставляет общий `*sql.Tx` для нескольких записей и River enqueue. Внешний SMTP/model call происходит после commit и после atomic claim состояния. Шаблон не добавляет business callbacks, AutoMigrate или lazy associations. Pure domain behavior не зависит от GORM/HTTP.

@@ -2,16 +2,16 @@
 name: layered-go
 description: Write, refactor, and review Go code using the layered design framework adapted from Layered Rails. Use for HTTP handlers, domain behavior, application operations, queries, policies, workers, serialization, and architecture reviews; inspect explicit contracts, dependency direction, transactions, and specification-test failures.
 metadata:
-  version: "1"
+  version: "2"
   source: "serge-masiutin/rails-template@a315bfbcf29ec14b83c9f05378abd595bc5228e0"
 ---
 
 ## Project Context
 
 - Read [architecture](../../../docs/architecture.md), `go.mod`, and callers first. Keep small features in domain-named packages under `internal`; do not create four empty directory layers or one service per endpoint.
-- The starter uses net/http, pgx, SCS, Gonertia, and React. Domain values own invariants; stores own SQL; handlers parse, authorize, delegate, and render. Pass actor identity explicitly; context carries cancellation/deadlines, not hidden business dependencies.
+- The starter uses net/http, Gonertia, React, SCS, GORM/pgx, Goose, River, go-mail, and Genkit. Read the [installed stack contracts](references/installed-stack.md). Domain values own invariants; stores own persistence; handlers parse, authorize, delegate, and render. Pass actor identity explicitly; context carries cancellation/deadlines, not hidden business dependencies.
 - Query/store implementations are infrastructure. Put an interface at its consumer only when a real boundary requires it; the domain does not import pgx or HTTP. Runtime calls and import direction are different graphs.
-- Examples describe possible features, not installed APIs. The original Rails gem guides are replaced by Go mechanism references. Jobs, outbox, mail delivery, AI, and payment operations require concrete implementations before use.
+- Examples describe possible features, not installed APIs. The original Rails gem guides are replaced by Go mechanism references. River jobs, SMTP delivery, and a bounded read-only Genkit assistant are implemented. Examples for other providers, payments, and generic outboxes remain illustrative; verify their concrete implementation before use.
 - Use [testing](../../../docs/testing.md). Do not generate Ruby, Active Record hooks, base-service inheritance, or a universal repository layer.
 
 # Layered Go

@@ -1,11 +1,14 @@
 # Go Template
 
-Go + Inertia + React starter для приложения с серверными маршрутами и React-интерфейсом. В одном репозитории — PostgreSQL, вход, приватные заметки, админка, Storybook и навыки для агента: можно начать с работающего сценария и развивать его под свой продукт.
+Go + Inertia + React starter для приложения с серверными маршрутами и React-интерфейсом. В одном репозитории — PostgreSQL, ORM, вход, приватные заметки, фоновые задачи, почта, AI-помощник, админка, Storybook и навыки для агента: можно начать с работающего сценария и развивать его под свой продукт.
 
-- **Go:** `net/http`, Gonertia, pgx и SCS; явный SQL, типизированные входы и ошибки.
+- **Go:** `net/http`, Gonertia, GORM generics, pgx, Goose и SCS; типизированные входы и явные транзакции.
+- **Фоновые задачи:** River и локальный River UI; транзакционная постановка и защита от повторных внешних эффектов.
+- **Почта и AI:** go-mail + Mailpit, Genkit с Gemini/OpenAI, read-only tools, schema и лимиты; рабочие сценарии на странице Note tools.
+- **Разработка:** Air, Prometheus, типизированная конфигурация; [выбор библиотек и альтернативы](docs/stack.md).
 - **React:** TypeScript, Vite, Tailwind и локальный Martian Mono; навигация и формы через Inertia.
 - **Доступ:** серверные сессии, CSRF, проверка владельца записей и актуальных прав администратора.
-- **Проверки:** Go race detector, PostgreSQL integration tests, Vitest, Playwright, сборка Storybook и Docker.
+- **Проверки:** govulncheck, Go race detector, PostgreSQL integration tests, Vitest, Playwright, сборка Storybook и Docker.
 - **30 skills:** 18 оригинальных Evil Martians, `clear-writing` из Rails-шаблона и 11 адаптаций под Go. Происхождение и различия сохранены в [каталоге](docs/skills.md).
 
 ```text
@@ -36,9 +39,9 @@ mise exec -- bin/manage create-user --email you@example.com --admin
 mise exec -- bin/dev
 ```
 
-Откройте **http://localhost:3000**. Войдите, создайте заметку и перейдите в Admin. React обновляется через Vite HMR; после изменения Go перезапустите `bin/dev`. Storybook запускается отдельно: `mise exec -- npm run storybook`, адрес **http://localhost:6006**.
+Откройте **http://localhost:3000**. Войдите, создайте заметку и перейдите в Admin. React обновляется через Vite HMR; Go server и worker пересобираются через Air. Страница **Note tools** отправляет письма в локальный Mailpit; для AI [задайте провайдера](docs/ai.md). Storybook запускается отдельно: `mise exec -- npm run storybook`, адрес **http://localhost:6006**.
 
-`bin/setup` создаёт `.env` из примера, устанавливает зависимости, поднимает локальный PostgreSQL на порту 5437, применяет миграции и собирает frontend. Данные БД хранятся в Docker volume.
+`bin/setup` создаёт `.env` из примера, устанавливает зависимости, поднимает локальный PostgreSQL на порту 5437 и Mailpit на 1025/8025, применяет миграции и собирает frontend. Данные БД хранятся в Docker volume.
 
 ## Проверить
 
@@ -50,8 +53,8 @@ mise exec -- bin/ci
 
 ## Устройство
 
-[Архитектура](docs/architecture.md) · [Разработка](docs/development.md) · [Тесты](docs/testing.md) · [Контейнер и деплой](docs/deployment.md) · [Skills и источники](docs/skills.md)
+[Набор библиотек](docs/stack.md) · [Очередь и почта](docs/background.md) · [AI](docs/ai.md) · [Архитектура](docs/architecture.md) · [Разработка](docs/development.md) · [Тесты](docs/testing.md) · [Контейнер и деплой](docs/deployment.md) · [Skills и источники](docs/skills.md)
 
-Это основа на базе [rails-template](https://github.com/serge-masiutin/rails-template), а не перенос каждой Rails-интеграции. Почта, очередь, AI, realtime, загрузка файлов, восстановление пароля и публичная регистрация не установлены. Навыки описывают, как добавлять такие возможности при необходимости. Админка показывает число пользователей; управление пользователями выполняется CLI.
+Основа — [rails-template](https://github.com/serge-masiutin/rails-template); механизмы адаптированы под Go. Realtime, загрузка файлов, восстановление пароля и публичная регистрация не установлены. Админка показывает число пользователей; управление пользователями выполняется CLI.
 
 Код — [MIT](LICENSE). Заимствованные материалы и их лицензии перечислены в [THIRD_PARTY.md](THIRD_PARTY.md).

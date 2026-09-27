@@ -24,13 +24,13 @@ by analogy with the Rails adapter.
 For a deferred collection that later grows, authorize every request, group only related
 props, use stable IDs for merges, and reset the prop when the filter changes. Query
 pagination and UI merging are different responsibilities. Concurrent prop loaders
-must not share a `pgx.Tx` or single `pgx.Conn`.
+must not share a `pgx.Tx`, `*sql.Tx`, transaction-bound GORM handle, or single `pgx.Conn`.
 
 Start rarely changing reference data as a normal prop. Only add a server cache after
 measurement; include access/version/locale dimensions and explicit invalidation.
 Clearing Inertia history does not expire server caches or revoke data already exposed.
 
-Long AI generation belongs in a separately designed durable worker after commit,
-with persisted state and an authorized result/delivery path. Those optional facilities
-are not installed in this starter. Serialization describes their output; it must not
-start model calls as a hidden attribute conversion.
+Long AI generation runs through River after a transaction commits the run and job together.
+`assistant.Service.Recent` returns owner-scoped persisted results; `/tools` polls only while
+work is active. Serialization describes this output; it must not start model calls as
+a hidden attribute conversion. Model/prompt metadata and queue IDs stay outside public DTOs.

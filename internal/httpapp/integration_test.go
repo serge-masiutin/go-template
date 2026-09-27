@@ -15,49 +15,19 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/serge-masiutin/go-template/internal/accounts"
 	"github.com/serge-masiutin/go-template/internal/config"
 	"github.com/serge-masiutin/go-template/internal/database"
+	"github.com/serge-masiutin/go-template/internal/testdb"
 )
 
 func TestAccountAndOwnershipFlow(t *testing.T) {
 	t.Chdir("../..")
-	connectionString := os.Getenv("TEST_DATABASE_URL")
-	if connectionString == "" {
-		t.Fatal("TEST_DATABASE_URL is required for integration tests")
-	}
 	ctx := context.Background()
-	cfg, err := pgxpool.ParseConfig(connectionString)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasSuffix(cfg.ConnConfig.Database, "_test") {
-		t.Fatal("integration database name must end in _test")
-	}
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pool.Close()
-	schema := fmt.Sprintf("test_%d", time.Now().UnixNano())
-	if _, err := pool.Exec(ctx, "CREATE SCHEMA "+schema); err != nil {
-		t.Fatal(err)
-	}
-	defer pool.Exec(ctx, "DROP SCHEMA "+schema+" CASCADE")
-	cfg.ConnConfig.RuntimeParams["search_path"] = schema
-	testPool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer testPool.Close()
-	if err := database.Migrate(ctx, testPool); err != nil {
-		t.Fatal(err)
-	}
+	testPool := testdb.New(t)
 	if err := database.Migrate(ctx, testPool); err != nil {
 		t.Fatalf("repeat migration: %v", err)
 	}
@@ -80,10 +50,11 @@ func TestAccountAndOwnershipFlow(t *testing.T) {
 	if err := testPool.QueryRow(ctx, "INSERT INTO notes(user_id,body) VALUES($1,'private to another user') RETURNING id", other.ID).Scan(&foreignNote); err != nil {
 		t.Fatal(err)
 	}
-	sessionStore := pgxstore.NewWithCleanupInterval(testPool, 0)
+	sessionStore := pgxstore.NewWithCleanupInterval(testPool.Pool, 0)
 	sessions := scs.New()
 	sessions.Store = sessionStore
-	handler, err := New(config.Config{}, testPool, sessions, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	// Always exercise built assets, even when bin/dev has a live hot file.
+	handler, err := New(config.Config{Production: true, Mail: config.Mail{Enabled: true}, AI: config.AI{Enabled: true, Model: "fixture/model"}, MetricsToken: strings.Repeat("m", 32)}, testPool, sessions, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,6 +196,37 @@ func TestAccountAndOwnershipFlow(t *testing.T) {
 	status, _, _ = request("DELETE", fmt.Sprintf("/notes/%d", foreignNote), "", csrf)
 	if status != 404 {
 		t.Fatalf("foreign delete: %d", status)
+	}
+	status, _, _ = request("POST", "/tools/email", `{"user_id":99}`, csrf)
+	if status != 400 {
+		t.Fatalf("email owner override accepted: %d", status)
+	}
+	status, _, _ = request("POST", "/tools/email", `{}`, csrf)
+	if status != 303 {
+		t.Fatalf("queue email: %d", status)
+	}
+	status, _, _ = request("POST", "/tools/assistant", `{"question":"Summarize my own notes"}`, csrf)
+	if status != 303 {
+		t.Fatalf("queue AI: %d", status)
+	}
+	status, _, _ = request("POST", "/tools/assistant", `{"question":"Duplicate"}`, csrf)
+	if status != 303 || string(page("/tools")["errors"]) == "{}" {
+		t.Fatal("duplicate AI request was accepted")
+	}
+	if _, err := testPool.Exec(ctx, "INSERT INTO assistant_runs(user_id,question,model,prompt_version,state,answer) VALUES ($1,'foreign question','fixture/model','notes-v1','completed','foreign answer')", other.ID); err != nil {
+		t.Fatal(err)
+	}
+	toolProps := page("/tools")
+	if !strings.Contains(string(toolProps["runs"]), "Summarize my own notes") || strings.Contains(string(toolProps["runs"]), "foreign") || strings.Contains(string(toolProps["runs"]), "model") || strings.Contains(string(toolProps["emails"]), "job_id") {
+		t.Fatal("tool page boundary violated")
+	}
+	status, _, _ = request("GET", "/metrics", "", "")
+	if status != 401 {
+		t.Fatalf("unauthorized metrics: %d", status)
+	}
+	status, _, metrics := request("GET", "/metrics", "", "", map[string]string{"Authorization": "Bearer " + strings.Repeat("m", 32)})
+	if status != 200 || !strings.Contains(string(metrics), "background_jobs") || strings.Contains(string(metrics), "Summarize my own notes") {
+		t.Fatalf("metrics contract: %d", status)
 	}
 	status, _, _ = request("GET", "/admin", "", "")
 	if status != 200 {

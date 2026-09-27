@@ -134,7 +134,7 @@
       "archive": "third_party/skills/go-serialization.source.tar.gz",
       "archiveSha256": "215a278e2ddeb0a9cf54f05fa04a8d8952cfb4fe0a2229fa7073a52634edeaca",
       "patch": "third_party/skills/go-serialization.patch",
-      "patchSha256": "87f78f4e06a6d722b49e4c8f406ff5403591b0c744811b38d57639edc6c9fc4a",
+      "patchSha256": "bbdf0922beb0924e75034f1fea6af0819b2630e2e78d6fdc9903fc014857007b",
       "sourceFiles": {
         "SKILL.md": "53ce9b90757d90ebd7b9529dd6ecab1cf8976faa72cd740d8ce69d7a89499286",
         "references/loading-options.md": "f973c154a4f6f90afad8480f42a1c6d2f0001ccc366bdc1d69d5a0f177ff0bec"
@@ -145,7 +145,7 @@
       },
       "files": {
         "SKILL.md": "5f9bc4c6f9b871962084577c2bdec23c8db6446397afce322fc5f38c94850394",
-        "references/loading-options.md": "d4c98272b8ac55b72276cc4fb292ea4d485e62f8b955518cb6a9c960f87d76b4"
+        "references/loading-options.md": "00cb44fa8ad2a4957fa3a060ab7563cfc00d73289f996d03ca5956c53b91ef01"
       }
     },
     {
@@ -300,7 +300,7 @@
       "archive": "third_party/skills/inertia-go-setup.source.tar.gz",
       "archiveSha256": "c96763b8f3f4e83cb93b15f48bb3f09ef4d61593f9b6244bea98b611cc943e67",
       "patch": "third_party/skills/inertia-go-setup.patch",
-      "patchSha256": "e3e1959c755a71424c3dbd2fed5af00115df0b5f67df3177669b673322c85fbf",
+      "patchSha256": "40fead428cf85b763a3d8250bb685e4447997d9893782ce9ca09cbe4bebd377a",
       "sourceFiles": {
         "SKILL.md": "cba1da55d1a5399477232e774384bf967fb5e0b6f934701e96e0122b612b2a90",
         "references/claude-md-templates.md": "a4e05ba00b096afe8e1bcd25655f0a0f8980577ffd894c366edc978617dba0b3"
@@ -310,7 +310,7 @@
         "references/claude-md-templates.md": "references/claude-md-templates.md"
       },
       "files": {
-        "SKILL.md": "d2ff67a85b441e69545ee73c7988ff6c6cde7f672ae79da997ea06805e93102a",
+        "SKILL.md": "b984f10f68b0c07078e5ae01b44539bd62b769c05e0739a93cfb0f07e608a757",
         "references/claude-md-templates.md": "bbeb36803bd5aa46b47e2218d1ec12a2d383ac11db75d43301b635690f9d40de"
       }
     },
@@ -392,7 +392,7 @@
       "archive": "third_party/skills/layered-go.source.tar.gz",
       "archiveSha256": "f0954b2e56d65339376c60fa6b805a7486ceac79751f92199bf826baf1dbf0bd",
       "patch": "third_party/skills/layered-go.patch",
-      "patchSha256": "179987d7683ca01ff886e88904baae845f27861a168e89928d57c454af255ca9",
+      "patchSha256": "3f1fe487c93417b2d0c33457556e680970637cc0f734c9cf0b25542f3179595a",
       "sourceFiles": {
         "SKILL.md": "46ea564dd0b385eea620da5051b2d4c1ebf25d649394746e4858fc4c165cf579",
         "examples/authorization-to-policy.md": "b8967644ab4a82b0b367b03922573258c1fb6cc059bc6193c7b73bb9c501fbab",
@@ -512,7 +512,7 @@
         "workflows/spec-test.md": "workflows/spec-test.md"
       },
       "files": {
-        "SKILL.md": "3c4754312efebd2bcf3bedf9106463b076a1fbcd8f1d38654cb7a1843cd9717f",
+        "SKILL.md": "0e5153e9d6711e9edd5b7c43f38e2e034c03c4993bef96f1b37a5f69f8325fe1",
         "examples/authorization-to-policy.md": "c5ab2deb34fb8d44c123898938df97315b1639306acdb74ceadb56bb15f16a6c",
         "examples/callbacks-to-service.md": "f3fa80bdc199b2679696da70c6b8ac94e674c3574a2ac15b4a4e5fd433a994d7",
         "examples/complex-input-to-form-object.md": "af3982e46cda8ec6de143e507fac3051a9043854e32becd30571e50287fd70ec",
@@ -531,17 +531,18 @@
         "references/core/architecture-layers.md": "be7871eb0712e943b47bb4492d727da03666f54f9b52f600d59b7c6c89ac4024",
         "references/core/extraction-signals.md": "fd5ed4d1c23f8672639a64f61a44973edba29e6ad39437d042dd4a7d048fff96",
         "references/core/specification-test.md": "e9ac637ce1eba8e44826281a9c82da4e288b70c45726adae6298b8593a6f6db7",
-        "references/go-sources.md": "45a9584d6e45b3a1464695a4abae19ab8a7ed34d562121bf458901ce58832c0f",
-        "references/mechanisms/ai-provider-boundary.md": "8e220f4040706647e840c0f8ae55551d6f640503ba0efd7548277538764110d6",
-        "references/mechanisms/delivery-ports.md": "c3d9a5a0fa733d45af0cbaf34d4d31e4a912abc6cf7dabe233186de6e5896420",
+        "references/go-sources.md": "b042279b33e245f31d2d862f4b925cac163669af3338121e690f4973465d5d92",
+        "references/installed-stack.md": "5c4ba5017d929115ecfb0acd4296ddede250eadc8300512e56c4e64349b61099",
+        "references/mechanisms/ai-provider-boundary.md": "1a192321e7fe2db254d96afb71455babc8b5da65abb518c2148161ac82ba23f6",
+        "references/mechanisms/delivery-ports.md": "ddc2e2ee5c94a15aa1013caaf89a00991136aa5ac64e5b8af6c92bf30e96f5fe",
         "references/mechanisms/explicit-state-machines.md": "e9f4907d4d393dbb21c502917815159d2c638570221a43b1147137c0062cdbc3",
         "references/mechanisms/import-boundaries.md": "6eb9a56440a3839b97db9b97c1092b5c337029cb3078753e61ea254ac7145a49",
         "references/mechanisms/json-dtos.md": "c3fe2b696cb5205974441a913341becadfe7112bbc0fb6b3159324e4e2934d73",
         "references/mechanisms/policy-functions.md": "b53dbd6406e6f9183db53ab3543e43c54eb63ac289d593fd799987aa27adef46",
         "references/mechanisms/react-components.md": "c7cb2cf947dc2c4c6a379753d7431bd65407acfe9c8ccc1adc18bd5b8ff17af5",
-        "references/mechanisms/typed-config.md": "aeeb11a673acee6f131bce7956d01d0a0e8692a833a735170e6a929aa8d4f44c",
+        "references/mechanisms/typed-config.md": "93dc0fbb55cd57dd8f1758d11a7329dbe2dc03d9bd521a783c6eef0efe35a0a9",
         "references/mechanisms/typed-filters.md": "1f7c050cc1b265d222109d527b480b2cee3bbdd3180a6b26f8ae6c3c4e02bfae",
-        "references/mechanisms/worker-entrypoints.md": "b0707e64ba464491b053d85fb5d9bdcb0c596712a32dac2dc0ab96d023bc6c83",
+        "references/mechanisms/worker-entrypoints.md": "c460186ba50b485ebf542ea353469cc83a69cf7b2b8483709f3de4cf8d5eae69",
         "references/patterns/collaborator-objects.md": "aa84139370f222c3eaf0b7e3ac3b9a21710a2ad63dad4f81232402aed6d5d1c4",
         "references/patterns/concerns.md": "d9e4cdd2ae41db3914dbea518903dc79e13845f63c9d9fbae0f521250cf940e7",
         "references/patterns/filter-objects.md": "f67b4c40f3e272a699fecfb93314d34da8a4a79661aba9b4f36ef0889c3dc4eb",
@@ -549,18 +550,18 @@
         "references/patterns/policy-objects.md": "567630b49e77e78df7e01bc5080766cb4a85f31afb03c9b9aeb4d31159bb1f60",
         "references/patterns/presenters.md": "df611cea6a160c6314c6c57de02d27ed05d4f5b0775b06e7a139b8352f85f8d7",
         "references/patterns/query-objects.md": "b54daeeb2e56d9b548e2b9e186b2cdd1cc2a9860c5ed6596307c6bf98beaea76",
-        "references/patterns/repositories.md": "fb79bdcc6d3028cbd501db0b343d5c56470272ca731035f12857bf0a8f41f248",
+        "references/patterns/repositories.md": "bc2feec74c56bf4b694bc8c9f02870f0fd228c682b73eb3fa5cb79c584c110c4",
         "references/patterns/serializers.md": "f38f270df6fbc8c1313ea0741428790c67a38fa5ebf78aa73e330f9fc52e8aee",
         "references/patterns/service-objects.md": "3a184eb1fb25fe4195e70c3a117c8e9eb2cdd34b331c83daf289f77bb419ac03",
         "references/patterns/state-machines.md": "1a3a26841cda26ff5d9615fdeca1d0ca32cdb72e027401111b50ee7b6bb416f7",
         "references/patterns/value-objects.md": "771df525d1788e0667281fd2b78dd7f7bbbbb74ac69769f4af08c533c0810e2a",
-        "references/topics/ai-integration.md": "509b669e8b1559ee4c59845dc1719cfa3c58aedaf7ba496d676b044316bf824c",
+        "references/topics/ai-integration.md": "97e072ceb6dce859ce5ed0cdcb5101eb986139adc100fb44c6b8c7bb1daf60be",
         "references/topics/authorization.md": "9d701738cfac07391ce1bb6b80046fae45a30b291105ba7083715fb1a778775d",
         "references/topics/callbacks.md": "532f6ae28bc0dce1238359d50b016b1f8d01b5d918f41a45fd3f1c50d666d78f",
-        "references/topics/configuration.md": "626a542250e16dc5bd4c4f50bda64701bbe7f0a30885ee375a5a53072d5efde4",
+        "references/topics/configuration.md": "19ab5e2dc5c1b4b28a7960388d607780187a9bb3c078a375665c050406829e3d",
         "references/topics/current-attributes.md": "71da40c45d16d0b750cd778224b39df5d9d530c13d6a26daff19dbff03db6b4f",
         "references/topics/instrumentation.md": "6678982a881948a41ad2b1b6941ca770652153591f84d342abe4d95660311374",
-        "references/topics/notifications.md": "57bd26f8c1d2c87d6c19d0263de947bd6ffb2a629bc403abf553773256868423",
+        "references/topics/notifications.md": "f29d565b514ef15d3c4b6c2423a8aeb5aece67865412ab5040996c2682ff7896",
         "references/topics/view-components.md": "990305098f66a8fe8f8006faf31c596400f2a57986c3a2ac06e8ba46205e2b39",
         "workflows/analyze-callbacks.md": "c9465b471541983f8cfa140f8251ac702703421bf4c950da3118ebad9c747be7",
         "workflows/analyze-gods.md": "0bbf6f3413e54d5417dc689de44d46660ecf860e039b7a8a600017bcd2a6b54e",

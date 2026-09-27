@@ -228,7 +228,7 @@
 +For a deferred collection that later grows, authorize every request, group only related
 +props, use stable IDs for merges, and reset the prop when the filter changes. Query
 +pagination and UI merging are different responsibilities. Concurrent prop loaders
-+must not share a `pgx.Tx` or single `pgx.Conn`.
++must not share a `pgx.Tx`, `*sql.Tx`, transaction-bound GORM handle, or single `pgx.Conn`.
  
 -For rarely changing reference data, first render it normally. If measurement warrants
 -caching, choose a key that includes relevant version/access/locale dimensions and a
@@ -241,7 +241,7 @@
 -Long AI generation belongs in a job after commit, with persisted state and private
 -invalidation/delivery through the existing AnyCable system. Serialization only describes
 -the resulting authorized response; it must not start a model call while rendering.
-+Long AI generation belongs in a separately designed durable worker after commit,
-+with persisted state and an authorized result/delivery path. Those optional facilities
-+are not installed in this starter. Serialization describes their output; it must not
-+start model calls as a hidden attribute conversion.
++Long AI generation runs through River after a transaction commits the run and job together.
++`assistant.Service.Recent` returns owner-scoped persisted results; `/tools` polls only while
++work is active. Serialization describes this output; it must not start model calls as
++a hidden attribute conversion. Model/prompt metadata and queue IDs stay outside public DTOs.

@@ -15,20 +15,27 @@ import (
 	"time"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	inertia "github.com/romsar/gonertia/v3"
 	"github.com/serge-masiutin/go-template/internal/accounts"
+	"github.com/serge-masiutin/go-template/internal/assistant"
+	"github.com/serge-masiutin/go-template/internal/background"
 	"github.com/serge-masiutin/go-template/internal/config"
+	"github.com/serge-masiutin/go-template/internal/database"
 	"github.com/serge-masiutin/go-template/internal/diagnostics"
+	"github.com/serge-masiutin/go-template/internal/notemail"
 	"github.com/serge-masiutin/go-template/internal/notes"
+	"github.com/serge-masiutin/go-template/internal/observability"
+	"gorm.io/gorm"
 )
 
 //go:embed root.html
 var rootHTML string
 
 type App struct {
-	pool       *pgxpool.Pool
+	cfg        config.Config
+	emails     *notemail.Service
+	assistant  *assistant.Service
+	pool       *database.DB
 	accounts   *accounts.Store
 	notes      *notes.Store
 	sessions   *scs.SessionManager
@@ -37,15 +44,15 @@ type App struct {
 	loginLimit *loginLimiter
 }
 
-func New(cfg config.Config, pool *pgxpool.Pool, sessions *scs.SessionManager, logger *slog.Logger) (http.Handler, error) {
+func New(cfg config.Config, pool *database.DB, sessions *scs.SessionManager, logger *slog.Logger) (http.Handler, error) {
 	users, err := accounts.New(pool)
 	if err != nil {
 		return nil, err
 	}
 	hotFile := "tmp/vite.hot"
 	options := []inertia.Option{inertia.WithFlashProvider(flashProvider{sessions}), inertia.WithEncryptHistory()}
-	if cfg.Production {
-		hotFile = "" // Never honor a development hot file in a production process.
+	if cfg.Production || cfg.Environment == "test" {
+		hotFile = "" // Production and browser tests use built assets, even alongside bin/dev.
 	}
 	_, hotErr := os.Stat(hotFile)
 	if hotFile == "" || errors.Is(hotErr, os.ErrNotExist) {
@@ -69,17 +76,35 @@ func New(cfg config.Config, pool *pgxpool.Pool, sessions *scs.SessionManager, lo
 	if err != nil {
 		return nil, err
 	}
-	app := &App{pool: pool, accounts: users, notes: notes.New(pool), sessions: sessions, inertia: engine, logger: logger, loginLimit: newLoginLimiter()}
+	queue, err := background.Producer(pool, logger)
+	if err != nil {
+		return nil, err
+	}
+	metrics := observability.New(pool, logger)
+	app := &App{cfg: cfg, emails: notemail.New(pool, queue, users), assistant: assistant.New(pool, queue), pool: pool, accounts: users, notes: notes.New(pool), sessions: sessions, inertia: engine, logger: logger, loginLimit: newLoginLimiter()}
 	sessions.ErrorFunc = func(w http.ResponseWriter, r *http.Request, err error) { app.fail(w, r, err) }
 	pages := http.NewServeMux()
-	pages.HandleFunc("GET /{$}", app.home)
-	pages.HandleFunc("GET /login", app.loginPage)
-	pages.HandleFunc("POST /login", app.login)
-	pages.HandleFunc("POST /logout", app.logout)
-	pages.HandleFunc("POST /notes", app.createNote)
-	pages.HandleFunc("DELETE /notes/{id}", app.deleteNote)
-	pages.HandleFunc("GET /admin", app.admin)
+	register := func(pattern string, handler http.HandlerFunc) { pages.Handle(pattern, metrics.HTTP(pattern, handler)) }
+	register("GET /{$}", app.home)
+	register("GET /login", app.loginPage)
+	register("POST /login", app.login)
+	register("POST /logout", app.logout)
+	register("POST /notes", app.createNote)
+	register("DELETE /notes/{id}", app.deleteNote)
+	register("GET /admin", app.admin)
+	register("GET /tools", app.toolsPage)
+	register("POST /tools/email", app.emailNotes)
+	register("POST /tools/assistant", app.askAssistant)
 	mux := http.NewServeMux()
+	if cfg.MetricsToken != "" {
+		mux.Handle("GET /metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+cfg.MetricsToken)) != 1 {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			metrics.Handler().ServeHTTP(w, r)
+		}))
+	}
 	mux.HandleFunc("GET /health/live", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte("{\"status\":\"ok\"}\n"))
@@ -140,11 +165,7 @@ func (a *App) security(cfg config.Config, next http.Handler) http.Handler {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
 		}
-		started := time.Now()
 		next.ServeHTTP(w, r)
-		if r.URL.Path != "/health/live" && r.URL.Path != "/health/ready" {
-			a.logger.InfoContext(r.Context(), "request", "method", r.Method, "duration_ms", time.Since(started).Milliseconds())
-		}
 	})
 }
 
@@ -155,7 +176,7 @@ func (a *App) user(w http.ResponseWriter, r *http.Request) (accounts.User, bool)
 		return accounts.User{}, false
 	}
 	user, err := a.accounts.Find(r.Context(), id)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		if err := a.sessions.Destroy(r.Context()); err != nil {
 			a.fail(w, r, err)
 			return accounts.User{}, false

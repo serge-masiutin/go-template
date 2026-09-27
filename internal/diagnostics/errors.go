@@ -11,9 +11,21 @@ import (
 // Errors remain wrapped internally; only their safe diagnostic view is logged.
 func Attributes(err error) []any {
 	chain := make([]string, 0)
-	for cause := err; cause != nil; cause = errors.Unwrap(cause) {
+	var visit func(error)
+	visit = func(cause error) {
+		if cause == nil {
+			return
+		}
 		chain = append(chain, fmt.Sprintf("%T", cause))
+		if joined, ok := cause.(interface{ Unwrap() []error }); ok {
+			for _, nested := range joined.Unwrap() {
+				visit(nested)
+			}
+		} else {
+			visit(errors.Unwrap(cause))
+		}
 	}
+	visit(err)
 	attributes := []any{"error_chain", chain}
 	var postgres *pgconn.PgError
 	if errors.As(err, &postgres) {

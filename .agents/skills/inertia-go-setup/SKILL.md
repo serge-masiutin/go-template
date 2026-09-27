@@ -27,7 +27,11 @@ Read `go.mod`, `go.sum`, `package.json`, `package-lock.json`, `mise.toml`, Vite/
 | --- | --- |
 | `romsar/gonertia/v3` | Server adapter; inspect pinned API |
 | `@inertiajs/react` | React client adapter |
-| pgx + SQL migrations | PostgreSQL persistence |
+| GORM generics + pgx + Goose | PostgreSQL persistence and explicit SQL migrations |
+| River + `cmd/worker` | Transactional mail/AI jobs and reconciliation |
+| go-mail + Mailpit | SMTP adapter and local delivery inspection |
+| Genkit + `internal/assistant` | Typed flow/tools, Gemini/OpenAI adapters |
+| `tools/go.mod` + Air | Isolated development tools and Go reload |
 | SCS + pgxstore | Server sessions and flash storage |
 | `web/src/types.ts` | Explicit frontend contract and InertiaConfig augmentation |
 | Vite + Tailwind plugins | Frontend build and semantic CSS tokens |
@@ -36,7 +40,7 @@ Read `go.mod`, `go.sum`, `package.json`, `package-lock.json`, `mise.toml`, Vite/
 
 ## Step 2: Identify Missing Capabilities
 
-The starter already has the core runtime. Do not install a Rails serializer, route generator, ORM, queue or UI framework merely because an upstream skill mentioned one. Go DTO mapping and net/http routing are explicit.
+The starter already has the core runtime, GORM, Goose, River and Genkit. Read [stack decisions](../../../docs/stack.md) before adding alternatives. Do not install a Rails serializer, route generator, second ORM/queue or UI framework merely because an upstream skill mentioned one. Go DTO mapping and net/http routing are explicit.
 
 For a requested capability, compare the standard library/current dependencies with a specific addition. Explain the tradeoff when it affects the user's architecture; do not add optional dependencies without a task-related reason.
 

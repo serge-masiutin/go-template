@@ -13,11 +13,12 @@ RUN go mod download && go mod verify
 COPY cmd ./cmd
 COPY internal ./internal
 RUN CGO_ENABLED=0 go build -trimpath -o /out/server ./cmd/server && \
-    CGO_ENABLED=0 go build -trimpath -o /out/manage ./cmd/manage
+    CGO_ENABLED=0 go build -trimpath -o /out/manage ./cmd/manage && \
+    CGO_ENABLED=0 go build -trimpath -o /out/worker ./cmd/worker
 
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
-COPY --from=backend /out/server /out/manage /app/
+COPY --from=backend /out/server /out/manage /out/worker /app/
 COPY --from=frontend /src/web/build /app/web/build
 COPY web/public/fonts /app/web/public/fonts
 ENV APP_ENV=production HTTP_ADDR=0.0.0.0:3000

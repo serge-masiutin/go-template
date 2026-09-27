@@ -4,11 +4,11 @@
 
 Версии: `mise.toml`, `go.mod`, `package.json`, `package-lock.json`. После `mise trust` и `mise install` запускайте команды через `mise exec --`.
 
-`bin/configure github.com/owner/app` меняет Go module и импорты, имя npm-пакета и lock-файл. Источники skills и ссылки на исходный шаблон сохраняются. После настройки выполните `bin/ci`.
+`bin/configure github.com/owner/app` меняет Go modules приложения/инструментов и импорты, имя npm-пакета и lock-файл. Источники skills и ссылки на исходный шаблон сохраняются. После настройки выполните `bin/ci`.
 
-`bin/setup` копирует отсутствующий `.env`, устанавливает зависимости, поднимает PostgreSQL из `compose.yml`, применяет миграции и собирает frontend. Повторный запуск сохраняет `.env` и данные. Запускать Docker Compose следует из корня проекта.
+`bin/setup` копирует отсутствующий `.env`, устанавливает зависимости, поднимает PostgreSQL и Mailpit из `compose.yml`, применяет миграции и собирает frontend. Повторный запуск сохраняет `.env` и данные. Запускать Docker Compose следует из корня проекта.
 
-`bin/dev` собирает Go и запускает его вместе с Vite. При остановке любого процесса завершается второй; Ctrl+C останавливает оба. React/CSS используют HMR. После правки Go нужен перезапуск. По умолчанию приложение — `http://localhost:3000`, Vite — `http://localhost:5173`. Порт Go можно изменить через `HTTP_ADDR` и `PUBLIC_URL` в `.env`; Vite берёт CORS origin из `PUBLIC_URL`. При изменении порта самого Vite обновите `vite.config.ts`, проверку hot origin в `internal/httpapp/app.go` и тесты вместе.
+`bin/dev` запускает Vite и два Air watcher: server и worker. Go пересобирается при изменении связанных файлов; React/CSS используют HMR. Ctrl+C завершает все процессы; аварийное завершение watcher/Vite останавливает остальных. Ошибка компиляции видна в терминале, Air ждёт исправления. Конфигурация `.env` читается при запуске supervisor: после её изменения перезапустите `bin/dev`. По умолчанию приложение — `http://localhost:3000`, Vite — `http://localhost:5173`. Порт Go можно изменить через `HTTP_ADDR` и `PUBLIC_URL` в `.env`; Vite берёт CORS origin из `PUBLIC_URL`. При изменении порта самого Vite обновите `vite.config.ts`, проверку hot origin в `internal/httpapp/app.go` и тесты вместе.
 
 ## Создать пользователя
 
@@ -34,18 +34,35 @@ bash -c 'read -r -s -p "Password: " starter_password; printf "\n" >&2; printf "%
 | `DATABASE_URL` | Обязательная строка подключения PostgreSQL |
 | `HTTP_ADDR` | Адрес listener; default `127.0.0.1:3000` |
 | `PUBLIC_URL` | HTTP origin без пути; production требует явного HTTPS origin |
-| `DB_MAX_CONNECTIONS` | Положительное число соединений; default 10 |
+| `DB_MAX_CONNECTIONS` | Не менее 2 соединений; default 10; server и worker имеют отдельные бюджеты |
+| `WORKER_CONCURRENCY` | 1–100 mail workers; default 4; AI — один на процесс |
+| `SHUTDOWN_TIMEOUT` | 1s–1m; default 10s |
+| `METRICS_TOKEN` | Пустое значение выключает `/metrics`; иначе минимум 32 символа |
 
 `PUBLIC_URL` задаёт CORS origin Vite в development и проверяет deployment-конфигурацию; приложение не использует его как Host allowlist или генератор абсолютных ссылок. Ограничивайте публичные hostnames на reverse proxy. Локальный `.env` читают shell-обёртки; бинарники получают переменные из окружения и не загружают dotenv автоматически.
 
 ## SQL и миграции
 
-Миграции в `internal/database/migrations` встраиваются в бинарник. Добавляйте следующий числовой SQL-файл, не меняйте уже применённые миграции. `mise exec -- bin/manage migrate` берёт advisory lock и применяет ожидающие файлы одной транзакцией. Ошибка откатывает изменения; сервер сам миграции не запускает. Нет автоматического down/rollback — обратное изменение оформляется новой миграцией.
+Goose читает SQL-файлы `internal/database/migrations`, встроенные в бинарник. Добавляйте следующий числовой файл с `-- +goose Up` / `-- +goose Down`, не меняйте применённые миграции. `mise exec -- bin/manage migrate` держит один advisory lock на миграции приложения и River. Каждая миграция приложения атомарна; весь набор не является одной транзакцией. При ошибке исправьте причину и повторите команду; уже применённые версии сохраняются.
+
+Первая Go-миграция принимает известную историю прежнего starter либо создаёт исходные таблицы; неизвестная legacy history вызывает ошибку. Исходный DDL сохранён в `internal/database/bootstrap`. Сервер/worker миграции не запускают. Management CLI не предоставляет destructive down: обратное изменение оформляйте новой миграцией.
+
+GORM использует generics API и тот же pgx pool через `stdlib.OpenDBFromPool`. Запросы конкретной функции остаются в её store/operation. Не включайте AutoMigrate, SQL debug logging или business hooks. Многозаписочные операции открывают явную транзакцию; пример совместного `InsertTx` — `internal/notemail/notemail.go`.
 
 Для локальной БД: `docker compose exec postgres psql -U starter -d starter_development`. Остановка без удаления данных: `docker compose stop postgres`.
 
 ## Компоненты
 
-Стили и semantic tokens — `web/src/styles.css`; базовые компоненты — `web/src/components`. `npm run storybook` поднимает каталог на порту 6006, `npm run build:storybook` собирает его в `storybook-static`. Каталог не включается в production-контейнер. Storybook не создаёт hot file приложения.
+Стили и semantic tokens — `web/src/styles.css`; базовые компоненты — `web/src/components`. Tailwind сканирует только `web/src`, чтобы документация и skills не влияли на CSS. `npm run storybook` поднимает каталог на порту 6006, `npm run build:storybook` собирает его в `storybook-static`. Каталог не включается в production-контейнер. Storybook не создаёт hot file приложения.
 
 Пакет shadcn не установлен. При необходимости примените `shadcn-inertia`, сохранив CSRF, реальные JSON-типы и CSP. Для обычных компонентов используйте исходные EM `sb-*` и `tailwind-best-practices`.
+
+
+## Дополнительные инструменты
+
+- Почта и River UI: [очередь и почта](background.md); Mailpit — `http://localhost:8025`, River UI — `http://localhost:8087` после включения Compose profile.
+- AI-конфигурация и тесты: [AI-помощник](ai.md).
+- `bin/tool air -v` и `bin/tool govulncheck ./...` используют отдельный `tools/go.mod`. Это позволяет обновлять dev tooling без изменения runtime dependencies. После обновления tools выполните `go -C tools mod tidy`.
+- `/metrics` требует `Authorization: Bearer <METRICS_TOKEN>`. Prometheus exporter включает Go runtime/process, пул БД, HTTP duration/status по шаблону маршрута и состояния River jobs. Он не экспортирует тела запросов, notes, вопросы, ответы или сырые URL. Ошибка чтения queue metrics делает scrape неуспешным, а не выдаёт нулевую очередь.
+
+Установка Prometheus/Grafana и OTLP collector в starter не входит. Для мониторинга подключите exporter к существующей системе и отдельно контролируйте доступность worker/возраст очереди.

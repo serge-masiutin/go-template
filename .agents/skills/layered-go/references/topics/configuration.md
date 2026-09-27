@@ -30,7 +30,7 @@ func (c MailConfig) Validate() error {
 }
 ```
 
-This is an example for adding mail; the starter's actual configuration is `internal/config/config.go`, and mail is not installed.
+This illustrates the configuration boundary. The starter's actual `config.Mail` and `config.AI` live in `internal/config/config.go`; caarlos0/env parses their tags before semantic validation. Read those types before changing environment keys.
 
 ### Shared Configuration
 

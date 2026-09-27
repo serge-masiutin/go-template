@@ -4,6 +4,8 @@ cd "$(dirname "$0")/.."
 test -z "$(gofmt -l cmd internal tests/browserfixture)"
 go mod tidy -diff
 go mod verify
+go -C tools mod tidy -diff
+go -C tools mod verify
 go vet ./...
 go test -race ./...
 npx prettier --check web/src .storybook tests/browser '*.ts' 'scripts/*.mjs'

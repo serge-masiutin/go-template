@@ -18,6 +18,7 @@ export function Layout({
           Go Template
         </Link>
         <nav aria-label="Main" className="flex items-center gap-4 text-sm">
+          <Link href="/tools">Note tools</Link>
           {user.admin && <Link href="/admin">Admin</Link>}
           <Form
             action="/logout"

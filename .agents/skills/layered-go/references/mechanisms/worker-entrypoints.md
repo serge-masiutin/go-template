@@ -32,4 +32,4 @@ Characterize payload compatibility, retry behavior and scheduling first. Remove 
 
 ## Layer Placement
 
-Workers are inbound presentation adapters; application operations orchestrate; domain types own invariants; queue clients are infrastructure. No queue runtime is installed in the starter.
+Workers are inbound presentation adapters; application operations orchestrate; domain types own invariants; queue clients are infrastructure. The starter uses River typed workers in `internal/background` and `cmd/worker`. Enqueue through the same SQL transaction as business state. Mail/AI jobs have one attempt because provider success can precede a lost acknowledgement; periodic reconciliation marks abandoned operations failed without replaying external effects.

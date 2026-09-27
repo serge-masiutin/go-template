@@ -23,13 +23,13 @@ type WelcomeSender interface {
 }
 ```
 
-Define an interface at its consumer when a transport boundary actually exists. The starter does not include an email provider, worker or outbox; these are design contracts for adding one.
+Define an interface at its consumer when a transport boundary actually exists. The starter implements note emails through `notemail.Service`, go-mail SMTP and River workers. The example above describes a separate welcome notification; implement its product rules before adding that job.
 
 ### Triggering Notifications
 
 An operation saves the user and a versioned outbox event in one transaction. The worker claims committed events with a bounded lease, loads recipient details and calls the delivery adapter. It records success only after acknowledged delivery.
 
-A crash after provider success but before acknowledgement can duplicate delivery. Use a stable event ID as the provider idempotency key where supported; otherwise document at-least-once delivery and duplicate tolerance. Outbox alone does not guarantee exactly once.
+A crash after provider success but before acknowledgement can duplicate delivery. Use a stable event ID as the provider idempotency key where supported; otherwise choose and document duplicate tolerance versus missed delivery. The installed note-email operation chooses one attempt and an explicit uncertain/failed outcome instead of automatic duplicate sends. Outbox alone does not guarantee exactly once.
 
 ### Conditional Delivery
 

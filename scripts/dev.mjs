@@ -4,7 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 await mkdir("tmp", { recursive: true });
 await rm("tmp/vite.hot", { force: true });
-execFileSync("go", ["build", "-o", "tmp/server", "./cmd/server"], {
+execFileSync("go", ["build", "./cmd/server", "./cmd/worker"], {
   stdio: "inherit",
 });
 const children = new Set();
@@ -18,7 +18,7 @@ async function stop(code) {
   for (const child of children) child.kill("SIGTERM");
   const deadline = setTimeout(() => {
     for (const child of children) child.kill("SIGKILL");
-  }, 11_000);
+  }, 18_000);
   await Promise.all(exits);
   clearTimeout(deadline);
   await rm("tmp/vite.hot", { force: true });
@@ -62,8 +62,10 @@ for (let attempt = 0; attempt < 100 && !stopping; attempt++) {
   await delay(100);
 }
 if (!stopping) {
-  if (ready) start("./tmp/server", []);
-  else {
+  if (ready) {
+    start("./bin/tool", ["air", "-c", ".air.toml"]);
+    start("./bin/tool", ["air", "-c", ".air-worker.toml"]);
+  } else {
     console.error("Vite did not become ready within 10 seconds.");
     await stop(1);
   }

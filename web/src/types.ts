@@ -8,3 +8,16 @@ declare module "@inertiajs/core" {
     sharedPageProps: SharedProps;
   }
 }
+
+export type NoteEmail = {
+  id: string;
+  state: "queued" | "sending" | "sent" | "failed";
+  createdAt: string;
+};
+export type AssistantRun = {
+  id: string;
+  question: string;
+  state: "queued" | "running" | "completed" | "failed";
+  answer: string;
+  createdAt: string;
+};

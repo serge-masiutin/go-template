@@ -36,10 +36,23 @@ These are this template's choices informed by the sources, not claims of univers
 | --- | --- | --- |
 | Lifecycle callbacks | Explicit domain methods and application transactions | Makes execution order and side effects visible |
 | `Current` | Explicit actor/tenant; context for I/O lifecycle and request metadata | Prevents hidden authority and cross-request state |
-| Active Record relations/scopes | Parameterized SQL in a feature store or focused query | Keeps persistence explicit without recreating an ORM |
+| Active Record relations/scopes | GORM generics with bound values, or parameterized SQL in a focused query | Uses an established ORM without persistence hooks owning business behavior |
 | Concerns and base classes | Named composition and narrow consumer interfaces | Matches Go's type system and dependency ownership |
 | Controller-only authorization | Shared operation enforcement, scoped entry-boundary reads | HTTP, CLI and workers must obey the same use-case contract |
 | Generated one-line jobs | Typed worker entry points where they own queue semantics | Thin transport adapters can still have a real responsibility |
 | File/LOC thresholds | Inspection signals, never automatic extraction rules | Cohesion and change cost matter more than size |
 
 The detailed chapters retain the original methodology while making these differences explicit. See the repository's skill provenance manifest for exact source paths and revisions.
+
+## Installed Libraries and Their Boundaries
+
+Reviewed on **2026-09-27** against the pinned versions in `go.mod` and `tools/go.mod`.
+
+- [GORM generics](https://gorm.io/docs/the_generics_way.html) and [security](https://gorm.io/docs/security.html): use typed operations and parameter binding; identifiers and sort expressions remain trusted code. Hooks are not application orchestration.
+- [Goose](https://github.com/pressly/goose): use embedded versioned migrations, explicit deployment execution and a database lock. Do not substitute runtime AutoMigrate.
+- [River with GORM](https://riverqueue.com/docs/gorm), [database drivers](https://riverqueue.com/docs/database-drivers), and [transactional enqueueing](https://riverqueue.com/docs/transactional-enqueueing): share the exact `*sql.Tx`; the database/sql worker uses a dedicated pgx listener.
+- [Brandur Leach, Transactionally Staged Job Drains](https://brandur.org/job-drain): the historical enqueue/commit failure window explains the choice; queue durability does not make SMTP/model calls exactly once.
+- [go-mail](https://github.com/wneessen/go-mail) and [Mailpit](https://mailpit.axllent.org/docs/): transport and local inspection are existing integrations, not reasons to hide delivery in persistence callbacks.
+- [Genkit Go tools](https://genkit.dev/docs/go/tool-calling/) and [telemetry collection](https://genkit.dev/docs/go/observability/telemetry-collection/): typed tools still require application authorization, bounded calls and a deliberate content-logging policy. The starter uses stable flows/generate, not the beta full-stack Agents API.
+
+See [installed stack contracts](installed-stack.md) for operational rules and [library decisions](../../../../docs/stack.md) for alternatives and selection rationale.

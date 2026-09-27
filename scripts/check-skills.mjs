@@ -28,7 +28,8 @@ function markdown(filename) {
     } else if (!fence) prose.push(line);
   }
   check(fence === null, `${filename}: unclosed code fence`);
-  for (const [, raw] of prose.join("\n").matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+  const withoutInlineCode = prose.join("\n").replace(/(`+)[\s\S]*?\1/g, "");
+  for (const [, raw] of withoutInlineCode.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
     const url = raw.replace(/^<|>$/g, "").split(/\s+"/)[0].split("#")[0];
     if (!url || /^[a-z][\w+.-]*:/.test(url)) continue;
     check(

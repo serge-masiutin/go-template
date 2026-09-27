@@ -12,5 +12,17 @@ services:
       interval: 2s
       timeout: 3s
       retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.31.2
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+  riverui:
+    image: ghcr.io/riverqueue/riverui:0.19.0
+    profiles: ["tools"]
+    environment:
+      DATABASE_URL: postgres://starter:local-development-only@postgres:5432/starter_development?sslmode=disable
+    ports: ["127.0.0.1:${RIVERUI_PORT:-8087}:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 volumes:
   postgres:

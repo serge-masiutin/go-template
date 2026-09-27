@@ -1,0 +1,19 @@
+root = "."
+tmp_dir = "tmp/air-server"
+env_files = []
+[build]
+cmd = "go build -o ./tmp/air-server/server ./cmd/server"
+entrypoint = ["./tmp/air-server/server"]
+include_ext = ["go", "html", "txt", "tmpl"]
+include_dir = ["cmd/server", "internal"]
+include_file = ["go.mod", "go.sum"]
+exclude_dir = ["node_modules", "web", ".git", ".agents", "third_party", "tools", "tmp"]
+exclude_regex = ["_test\\.go"]
+stop_on_error = true
+send_interrupt = true
+kill_delay = "16s"
+delay = 300
+[log]
+time = true
+[screen]
+clear_on_rebuild = false

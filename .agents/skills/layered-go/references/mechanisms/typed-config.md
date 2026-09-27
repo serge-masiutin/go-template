@@ -12,7 +12,7 @@ Compose structs by owner. A database adapter receives connection/pool settings; 
 
 ## Type Coercion and Validation
 
-Use `strconv`, `time.ParseDuration` and URL parsing. An omitted optional value may use its documented boundary default; a supplied invalid value must return an error. Validate enum values, positive limits and required production settings.
+Use the installed caarlos0/env struct tags for scalar/duration parsing, then explicit URL and semantic validation in `config.Load`. An omitted optional value may use its documented boundary default; a supplied invalid value must return an error. Validate enum values, positive limits and required production settings.
 
 ## Environment Sources and Local Overrides
 

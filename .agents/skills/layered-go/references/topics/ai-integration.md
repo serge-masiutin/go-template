@@ -2,7 +2,7 @@
 
 ## Summary
 
-AI features need the same explicit contracts as other external integrations. Preserve the source's provider boundary, orchestration, tools, structured outputs, embeddings and testing topics; do not introduce Active Agent or an agent framework into Go.
+AI features need the same explicit contracts as other external integrations. Preserve the source's provider boundary, orchestration, tools, structured outputs, embeddings and testing topics; use the installed Genkit flow/tool APIs without translating Active Agent inheritance into Go.
 
 ## Layer Placement
 
@@ -66,4 +66,4 @@ Keep one versioned prompt source per feature and explicit template inputs. Do no
 
 ## Background Processing
 
-Long-running work uses a durable job with bounded attempts, idempotency and progress/failure states. Do not launch an untracked goroutine after an HTTP response. The starter includes no model provider, queue, vector store or agent runtime; add and verify these only for a concrete feature.
+Long-running work uses a durable job with bounded attempts, idempotency and progress/failure states. Do not launch an untracked goroutine after an HTTP response. The starter implements this through River and `internal/assistant`: the job holds a run ID, the operation reloads its actor, and a bounded Genkit flow reads only that actor's notes. Gemini/OpenAI adapters use explicit models and no automatic generation retries. Vector search and multi-agent orchestration are not installed. See [installed contracts](../installed-stack.md) before extending the flow.

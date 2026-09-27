@@ -12,7 +12,7 @@
 +name: layered-go
 +description: Write, refactor, and review Go code using the layered design framework adapted from Layered Rails. Use for HTTP handlers, domain behavior, application operations, queries, policies, workers, serialization, and architecture reviews; inspect explicit contracts, dependency direction, transactions, and specification-test failures.
 +metadata:
-+  version: "1"
++  version: "2"
 +  source: "serge-masiutin/rails-template@a315bfbcf29ec14b83c9f05378abd595bc5228e0"
  ---
  
@@ -27,9 +27,9 @@
 -
 -Design and review Rails applications using layered architecture principles.
 +- Read [architecture](../../../docs/architecture.md), `go.mod`, and callers first. Keep small features in domain-named packages under `internal`; do not create four empty directory layers or one service per endpoint.
-+- The starter uses net/http, pgx, SCS, Gonertia, and React. Domain values own invariants; stores own SQL; handlers parse, authorize, delegate, and render. Pass actor identity explicitly; context carries cancellation/deadlines, not hidden business dependencies.
++- The starter uses net/http, Gonertia, React, SCS, GORM/pgx, Goose, River, go-mail, and Genkit. Read the [installed stack contracts](references/installed-stack.md). Domain values own invariants; stores own persistence; handlers parse, authorize, delegate, and render. Pass actor identity explicitly; context carries cancellation/deadlines, not hidden business dependencies.
 +- Query/store implementations are infrastructure. Put an interface at its consumer only when a real boundary requires it; the domain does not import pgx or HTTP. Runtime calls and import direction are different graphs.
-+- Examples describe possible features, not installed APIs. The original Rails gem guides are replaced by Go mechanism references. Jobs, outbox, mail delivery, AI, and payment operations require concrete implementations before use.
++- Examples describe possible features, not installed APIs. The original Rails gem guides are replaced by Go mechanism references. River jobs, SMTP delivery, and a bounded read-only Genkit assistant are implemented. Examples for other providers, payments, and generic outboxes remain illustrative; verify their concrete implementation before use.
 +- Use [testing](../../../docs/testing.md). Do not generate Ruby, Active Record hooks, base-service inheritance, or a universal repository layer.
 +
 +# Layered Go
@@ -3406,7 +3406,7 @@
 -agent = SummarizerAgent.new
 -summary = agent.summarize(article.body, max_length: 150)
 -```
-+Choose a provider only for a concrete feature. Pin its SDK/version if one is needed; a bounded HTTP client can be enough. Configure model, timeout, schema and budget at the application boundary.
++Use `internal/assistant` and its pinned Genkit Gemini/OpenAI plugins for the installed notes feature. Configure model, timeout, schema and turn/token limits through `config.AI`. Each invocation closes its tool over the trusted actor; model-generated arguments never choose the owner. Do not enable content telemetry or replace this with experimental agent APIs incidentally. For an independent one-call feature, a bounded provider client can still be sufficient.
  
  ## Agents with Tools
  
@@ -3646,7 +3646,7 @@
 +## Setup and Basic Usage
  
 -## Contents
-+Define the message the use case needs and a narrow delivery interface at its consumer. Wire the actual SMTP/HTTP adapter in the composition root. The starter has no delivery provider installed.
++Define the message the use case needs and a narrow delivery interface at its consumer. Wire the actual SMTP/HTTP adapter in the composition root. The starter uses `internal/mailing` (go-mail SMTP), `notemail.Service`, and River. Local delivery goes to the explicitly configured Mailpit sink; production requires its own SMTP configuration.
  
 -- Installation
 -- Basic Usage
@@ -4055,7 +4055,7 @@
  ## Layer Placement
  
 -The `performs` declaration belongs in the **Domain Layer** (model), keeping the async execution detail close to the domain logic it executes.
-+Workers are inbound presentation adapters; application operations orchestrate; domain types own invariants; queue clients are infrastructure. No queue runtime is installed in the starter.
++Workers are inbound presentation adapters; application operations orchestrate; domain types own invariants; queue clients are infrastructure. The starter uses River typed workers in `internal/background` and `cmd/worker`. Enqueue through the same SQL transaction as business state. Mail/AI jobs have one attempt because provider success can precede a lost acknowledgement; periodic reconciliation marks abandoned operations failed without replaying external effects.
 --- original/references/gems/alba.md
 +++ adapted/references/mechanisms/json-dtos.md
 @@ -1,257 +1,39 @@
@@ -4398,7 +4398,7 @@
 -# config/stripe.yml
 -default:
 -  currency: usd
-+Use `strconv`, `time.ParseDuration` and URL parsing. An omitted optional value may use its documented boundary default; a supplied invalid value must return an error. Validate enum values, positive limits and required production settings.
++Use the installed caarlos0/env struct tags for scalar/duration parsing, then explicit URL and semantic validation in `config.Load`. An omitted optional value may use its documented boundary default; a supplied invalid value must return an error. Validate enum values, positive limits and required production settings.
  
 -development:
 -  api_key: sk_test_xxx
@@ -7668,7 +7668,7 @@
 +is not required for this pattern; add one only for an established requirement.
 --- original/references/patterns/repositories.md
 +++ adapted/references/patterns/repositories.md
-@@ -1,382 +1,92 @@
+@@ -1,382 +1,94 @@
 -# Repositories
 -
 -## Contents
@@ -7693,7 +7693,7 @@
 -3. **Repositories** — only when you need to return **custom domain objects** mapped from Active Record data, decoupled from the AR schema.
 -
 -The repository's value is the *mapping boundary*: callers receive plain Ruby objects (`Data`, `Struct`, POROs) with stable shapes, not AR records. If you're returning AR records as-is, you don't need a repository — a scope or query object will do.
-+Repositories encapsulate persistence behind a small contract. Preserve the original distinction between a focused query and a data-access abstraction, but account for Go having no built-in Active Record model API: an explicit pgx store is the normal starting point here.
++Repositories encapsulate persistence behind a small contract. Preserve the original distinction between a focused query and a data-access abstraction, but account for Go having no built-in Active Record model API: the starter uses GORM generics in feature stores, with pgx available for focused SQL and sessions. ORM records remain separate from public DTOs and pure domain values.
  
  ## When to Use
  
@@ -7742,6 +7742,15 @@
 -      .order(likes_count: :desc)
 -      .limit(10)
 -  end
++The following pgx example illustrates the consumer contract. For installed features, follow `internal/notes`: `gorm.G[record](db).Where("user_id = ?", userID)` with bound values, explicit projections and affected-row checks. Keep table/column/order expressions server-owned. Do not add AutoMigrate, business callbacks or generic CRUD interfaces.
+ 
+-  def by_author_with_engagement(author)
+-    Post
+-      .where(author: author)
+-      .includes(:comments, :likes)
+-      .order(created_at: :desc)
+-  end
+-end
 +```go
 +type PostReader interface {
 +    FindInTenant(context.Context, int64, int64) (Post, error)
@@ -7757,14 +7766,6 @@
 +}
 +```
  
--  def by_author_with_engagement(author)
--    Post
--      .where(author: author)
--      .includes(:comments, :likes)
--      .order(created_at: :desc)
--  end
--end
--
 -# Usage
 -repository = PostRepository.new
 -@featured = repository.featured_with_stats
@@ -7992,7 +7993,7 @@
 -  end
 -end
 -```
-+A multi-record operation begins one transaction and passes transaction-bound persistence to each required write. Do not accidentally call the pool from inside an operation that expects the same transaction. Ensure rollback on every error and propagate commit failure. Persist external delivery intent in the transaction; deliver afterward.
++A multi-record operation begins one transaction and passes transaction-bound persistence to each required write. Do not accidentally call the pool from inside an operation that expects the same transaction. Ensure rollback on every error and propagate commit failure. Persist external delivery intent in the transaction; deliver afterward. In this starter use `ORM.WithContext(ctx).Transaction` and pass its `*sql.Tx` to River `InsertTx`, as in `notemail.Service.Request`. A second pool operation or an enqueue after commit breaks atomicity. Goose SQL migrations own schema changes, including River migrations under the same deployment lock.
 +
 +For concurrent state changes use conditional UPDATE/RETURNING or a row lock. An in-memory state check followed by an unconditional update is insufficient across processes.
  
@@ -9248,7 +9249,7 @@
  ## Summary
  
 -AI features (LLM calls, embeddings, agents) should be treated as infrastructure concerns, wrapped in abstractions that keep domain logic AI-agnostic. This enables testing, provider switching, and graceful degradation.
-+AI features need the same explicit contracts as other external integrations. Preserve the source's provider boundary, orchestration, tools, structured outputs, embeddings and testing topics; do not introduce Active Agent or an agent framework into Go.
++AI features need the same explicit contracts as other external integrations. Preserve the source's provider boundary, orchestration, tools, structured outputs, embeddings and testing topics; use the installed Genkit flow/tool APIs without translating Active Agent inheritance into Go.
  
  ## Layer Placement
  
@@ -9628,7 +9629,7 @@
 -  end
 -end
 -```
-+Long-running work uses a durable job with bounded attempts, idempotency and progress/failure states. Do not launch an untracked goroutine after an HTTP response. The starter includes no model provider, queue, vector store or agent runtime; add and verify these only for a concrete feature.
++Long-running work uses a durable job with bounded attempts, idempotency and progress/failure states. Do not launch an untracked goroutine after an HTTP response. The starter implements this through River and `internal/assistant`: the job holds a run ID, the operation reloads its actor, and a bounded Genkit flow reads only that actor's notes. Gemini/OpenAI adapters use explicit models and no automatic generation retries. Vector search and multi-agent orchestration are not installed. See [installed contracts](../installed-stack.md) before extending the flow.
 --- original/references/topics/authorization.md
 +++ adapted/references/topics/authorization.md
 @@ -1,398 +1,87 @@
@@ -10529,7 +10530,7 @@
  ```
  
 -### Application Config Base
-+This is an example for adding mail; the starter's actual configuration is `internal/config/config.go`, and mail is not installed.
++This illustrates the configuration boundary. The starter's actual `config.Mail` and `config.AI` live in `internal/config/config.go`; caarlos0/env parses their tags before semantic validation. Read those types before changing environment keys.
  
 -```ruby
 -# app/configs/application_config.rb
@@ -11732,7 +11733,7 @@
 -  end
 -end
 -```
-+Define an interface at its consumer when a transport boundary actually exists. The starter does not include an email provider, worker or outbox; these are design contracts for adding one.
++Define an interface at its consumer when a transport boundary actually exists. The starter implements note emails through `notemail.Service`, go-mail SMTP and River workers. The example above describes a separate welcome notification; implement its product rules before adding that job.
  
  ### Triggering Notifications
  
@@ -11749,7 +11750,7 @@
 -# Or inline delivery
 -PostsDelivery.with(post: post).published.deliver_now
 -```
-+A crash after provider success but before acknowledgement can duplicate delivery. Use a stable event ID as the provider idempotency key where supported; otherwise document at-least-once delivery and duplicate tolerance. Outbox alone does not guarantee exactly once.
++A crash after provider success but before acknowledgement can duplicate delivery. Use a stable event ID as the provider idempotency key where supported; otherwise choose and document duplicate tolerance versus missed delivery. The installed note-email operation chooses one attempt and an explicit uncertain/failed outcome instead of automatic duplicate sends. Outbox alone does not guarantee exactly once.
  
  ### Conditional Delivery
  
@@ -16395,7 +16396,7 @@
 +Searches and import analysis find candidates; they cannot decide business responsibility alone. Never fabricate executed tests from a proposed skeleton. See [core specification test](../references/core/specification-test.md).
 --- /dev/null
 +++ adapted/references/go-sources.md
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,58 @@
 +# Go Adaptation Sources
 +
 +Reviewed on **2026-09-27**. Runtime baseline: **Go 1.27.1**. These sources supplement the original Layered Rails framework; they do not replace its extraction criteria, specification test or refactoring scenarios. Publication dates and review dates are different: older architectural advice is retained when it remains applicable to the pinned toolchain.
@@ -16434,10 +16435,56 @@
 +| --- | --- | --- |
 +| Lifecycle callbacks | Explicit domain methods and application transactions | Makes execution order and side effects visible |
 +| `Current` | Explicit actor/tenant; context for I/O lifecycle and request metadata | Prevents hidden authority and cross-request state |
-+| Active Record relations/scopes | Parameterized SQL in a feature store or focused query | Keeps persistence explicit without recreating an ORM |
++| Active Record relations/scopes | GORM generics with bound values, or parameterized SQL in a focused query | Uses an established ORM without persistence hooks owning business behavior |
 +| Concerns and base classes | Named composition and narrow consumer interfaces | Matches Go's type system and dependency ownership |
 +| Controller-only authorization | Shared operation enforcement, scoped entry-boundary reads | HTTP, CLI and workers must obey the same use-case contract |
 +| Generated one-line jobs | Typed worker entry points where they own queue semantics | Thin transport adapters can still have a real responsibility |
 +| File/LOC thresholds | Inspection signals, never automatic extraction rules | Cohesion and change cost matter more than size |
 +
 +The detailed chapters retain the original methodology while making these differences explicit. See the repository's skill provenance manifest for exact source paths and revisions.
++
++## Installed Libraries and Their Boundaries
++
++Reviewed on **2026-09-27** against the pinned versions in `go.mod` and `tools/go.mod`.
++
++- [GORM generics](https://gorm.io/docs/the_generics_way.html) and [security](https://gorm.io/docs/security.html): use typed operations and parameter binding; identifiers and sort expressions remain trusted code. Hooks are not application orchestration.
++- [Goose](https://github.com/pressly/goose): use embedded versioned migrations, explicit deployment execution and a database lock. Do not substitute runtime AutoMigrate.
++- [River with GORM](https://riverqueue.com/docs/gorm), [database drivers](https://riverqueue.com/docs/database-drivers), and [transactional enqueueing](https://riverqueue.com/docs/transactional-enqueueing): share the exact `*sql.Tx`; the database/sql worker uses a dedicated pgx listener.
++- [Brandur Leach, Transactionally Staged Job Drains](https://brandur.org/job-drain): the historical enqueue/commit failure window explains the choice; queue durability does not make SMTP/model calls exactly once.
++- [go-mail](https://github.com/wneessen/go-mail) and [Mailpit](https://mailpit.axllent.org/docs/): transport and local inspection are existing integrations, not reasons to hide delivery in persistence callbacks.
++- [Genkit Go tools](https://genkit.dev/docs/go/tool-calling/) and [telemetry collection](https://genkit.dev/docs/go/observability/telemetry-collection/): typed tools still require application authorization, bounded calls and a deliberate content-logging policy. The starter uses stable flows/generate, not the beta full-stack Agents API.
++
++See [installed stack contracts](installed-stack.md) for operational rules and [library decisions](../../../../docs/stack.md) for alternatives and selection rationale.
+--- /dev/null
++++ adapted/references/installed-stack.md
+@@ -0,0 +1,30 @@
++# Installed Stack Contracts
++
++Read the actual `go.mod`, `internal/config`, and [stack decisions](../../../../docs/stack.md) before changing adapters. Preserve the layered extraction criteria; libraries implement mechanisms, not business ownership.
++
++## Persistence and Migrations
++
++- Use GORM generics in feature stores, explicit projections, bound values and owner predicates. Keep private persistence records separate from exported DTOs. SQL identifiers and sort expressions come from trusted code.
++- Keep invariants in domain/application behavior and constraints in PostgreSQL. Do not move business effects into GORM hooks, association autosave or serializers. Do not use AutoMigrate.
++- Use Goose SQL migrations and `bin/manage migrate` as a deployment step. Its lock covers application and River migrations. Server/worker startup does not migrate. Check each migration's transaction/lock requirements.
++- `database.DB` shares pgx connections with GORM/database/sql and SCS. Do not open parallel independent ORM pools. The worker owns one extra LISTEN connection; transaction-mode PgBouncer is unsuitable for it.
++
++## Jobs and External Effects
++
++- Follow `notemail.Service.Request` / `assistant.Service.Request`: persist the operation and River `InsertTx` with the same `*sql.Tx` inside one GORM transaction. Propagate commit errors.
++- Queue payloads carry versioned operation IDs, not credentials, questions, notes or recipient text. Workers reload state and derive authority from the persisted owner. Recheck data ownership when reading.
++- Keep entry points in `internal/background` thin. Domain/application operations own transitions; adapters own SMTP/model protocols. No untracked goroutine substitutes for a durable job.
++- Mail/AI jobs have one attempt. Conditional transitions prevent repeat execution after an uncertain provider outcome. Completed work is idempotent; reconciliation marks terminal/abandoned work failed without repeating external effects.
++- New retry policies need a provider idempotency contract and tests for success followed by lost acknowledgement. Database-only reconciliation can be retried. Drain workers on shutdown, then cancel within a bound.
++
++## Mail and AI
++
++- Use go-mail through `internal/mailing`; require TLS in production, keep template rendering in the notification operation, and send after commit. Mailpit is the explicitly configured local sink.
++- Use stable Genkit flow/generate/tool APIs through `internal/assistant`. Per-invocation tools close over the trusted actor; the model cannot supply another user's ID. Tools do not inherit authority from prompt text.
++- Version prompt/model/schema, validate structured output, and set whole-flow deadlines, turns and output tokens. Preserve disabled-by-default AI and explicit provider selection. Never silently fall back to another model.
++- Do not log raw SDK errors or enable Genkit content telemetry/reflection incidentally. River receives sanitized errors; diagnostics retain safe categories. Keep content out of job args, metrics and routine logs.
++- Synthetic provider tests establish contracts, not model quality. Run the [quality evaluations](../../../../evals/notes-assistant.md) against the selected model before enabling a product AI feature; do not claim unrun evaluations passed.
++
++## Verification
++
++Use real PostgreSQL tests for rollback, ownership, concurrent enqueue and state reconciliation; fake only external SMTP/model boundaries. Verify provider protocol errors and limits through local HTTP fixtures. Keep raw text and high-cardinality actor IDs out of Prometheus labels. Read [background operations](../../../../docs/background.md) and [AI contracts](../../../../docs/ai.md) when extending these paths.

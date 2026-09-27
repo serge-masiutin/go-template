@@ -37,6 +37,13 @@ test("sign in, validate, create and delete a private note, sign out", async ({
   await expect(item).toBeVisible();
   await item.getByRole("button", { name: "Delete" }).click();
   await expect(item).toHaveCount(0);
+  await page.getByRole("link", { name: "Note tools" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Do more with your notes." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("The AI assistant has not been enabled for this workspace."),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(
     page.getByRole("heading", { name: "Welcome back" }),

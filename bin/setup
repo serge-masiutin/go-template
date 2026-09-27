@@ -7,7 +7,8 @@ source .env
 set +a
 npm ci
 go mod download
-docker compose up -d --wait postgres
+go -C tools mod download
+docker compose up -d --wait postgres mailpit
 go run ./cmd/manage migrate
 npm run build
 echo 'Setup complete. Create your account using bin/manage, then run bin/dev.'

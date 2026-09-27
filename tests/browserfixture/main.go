@@ -61,7 +61,7 @@ func run() (result error) {
 	query := parsed.Query()
 	query.Set("search_path", schema)
 	parsed.RawQuery = query.Encode()
-	isolated, err := pgxpool.New(setup, parsed.String())
+	isolated, err := database.Open(setup, parsed.String(), 10)
 	if err != nil {
 		return errors.New("invalid isolated test database configuration")
 	}
@@ -79,7 +79,7 @@ func run() (result error) {
 		return errors.New("browser fixture account creation failed")
 	}
 	command := exec.CommandContext(ctx, "npm", "run", "test:browser")
-	command.Env = append(os.Environ(), "DATABASE_URL="+parsed.String(), "BROWSER_TEST_EMAIL="+email, "BROWSER_TEST_PASSWORD="+password)
+	command.Env = append(os.Environ(), "DATABASE_URL="+parsed.String(), "BROWSER_TEST_EMAIL="+email, "BROWSER_TEST_PASSWORD="+password, "AI_ENABLED=false", "MAIL_ENABLED=false")
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	return command.Run()

@@ -7,8 +7,9 @@ import (
 	"net/mail"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/serge-masiutin/go-template/internal/database"
+	"gorm.io/gorm"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,11 +24,11 @@ type User struct {
 }
 
 type Store struct {
-	pool      *pgxpool.Pool
+	pool      *database.DB
 	dummyHash []byte
 }
 
-func New(pool *pgxpool.Pool) (*Store, error) {
+func New(pool *database.DB) (*Store, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte("unused-constant-time-comparison"), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -48,39 +49,46 @@ func (s *Store) Create(ctx context.Context, email, password string, admin bool) 
 	if err != nil {
 		return User{}, err
 	}
-	var user User
-	err = s.pool.QueryRow(ctx, "INSERT INTO users(email,password_hash,admin) VALUES($1,$2,$3) RETURNING id,email,admin", email, hash, admin).Scan(&user.ID, &user.Email, &user.Admin)
-	return user, err
+	record := accountRecord{Email: email, PasswordHash: hash, Admin: admin}
+	err = gorm.G[accountRecord](s.pool.ORM).Create(ctx, &record)
+	return record.public(), err
 }
 
 func (s *Store) Authenticate(ctx context.Context, email, password string) (User, error) {
-	var user User
-	var hash []byte
-	err := s.pool.QueryRow(ctx, "SELECT id,email,admin,password_hash FROM users WHERE email=$1", strings.ToLower(strings.TrimSpace(email))).Scan(&user.ID, &user.Email, &user.Admin, &hash)
-	if errors.Is(err, pgx.ErrNoRows) {
+	record, err := gorm.G[accountRecord](s.pool.ORM).Where("email = ?", strings.ToLower(strings.TrimSpace(email))).First(ctx)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		bcrypt.CompareHashAndPassword(s.dummyHash, []byte(password))
 		return User{}, ErrCredentials
 	}
 	if err != nil {
 		return User{}, fmt.Errorf("find account: %w", err)
 	}
-	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(record.PasswordHash, []byte(password)); err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) || errors.Is(err, bcrypt.ErrPasswordTooLong) {
 			return User{}, ErrCredentials
 		}
 		return User{}, fmt.Errorf("verify password hash: %w", err)
 	}
-	return user, nil
+	return record.public(), nil
 }
 
 func (s *Store) Find(ctx context.Context, id int64) (User, error) {
-	var user User
-	err := s.pool.QueryRow(ctx, "SELECT id,email,admin FROM users WHERE id=$1", id).Scan(&user.ID, &user.Email, &user.Admin)
-	return user, err
+	record, err := gorm.G[accountRecord](s.pool.ORM).Select("id", "email", "admin").Where("id = ?", id).First(ctx)
+	return record.public(), err
 }
 
 func (s *Store) Count(ctx context.Context) (int, error) {
-	var count int
-	err := s.pool.QueryRow(ctx, "SELECT count(*) FROM users").Scan(&count)
-	return count, err
+	count, err := gorm.G[accountRecord](s.pool.ORM).Count(ctx, "*")
+	return int(count), err
 }
+
+// Persistence records never cross an HTTP or AI boundary.
+type accountRecord struct {
+	ID           int64 `gorm:"primaryKey"`
+	Email        string
+	PasswordHash []byte
+	Admin        bool
+}
+
+func (accountRecord) TableName() string { return "users" }
+func (r accountRecord) public() User    { return User{ID: r.ID, Email: r.Email, Admin: r.Admin} }

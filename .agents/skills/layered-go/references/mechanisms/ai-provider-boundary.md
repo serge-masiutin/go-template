@@ -4,7 +4,7 @@ This replaces Active Agent installation, inherited agents and implicit provider 
 
 ## Setup and Basic Usage
 
-Choose a provider only for a concrete feature. Pin its SDK/version if one is needed; a bounded HTTP client can be enough. Configure model, timeout, schema and budget at the application boundary.
+Use `internal/assistant` and its pinned Genkit Gemini/OpenAI plugins for the installed notes feature. Configure model, timeout, schema and turn/token limits through `config.AI`. Each invocation closes its tool over the trusted actor; model-generated arguments never choose the owner. Do not enable content telemetry or replace this with experimental agent APIs incidentally. For an independent one-call feature, a bounded provider client can still be sufficient.
 
 ## Agents with Tools
 

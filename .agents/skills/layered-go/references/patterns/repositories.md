@@ -2,7 +2,7 @@
 
 ## Summary
 
-Repositories encapsulate persistence behind a small contract. Preserve the original distinction between a focused query and a data-access abstraction, but account for Go having no built-in Active Record model API: an explicit pgx store is the normal starting point here.
+Repositories encapsulate persistence behind a small contract. Preserve the original distinction between a focused query and a data-access abstraction, but account for Go having no built-in Active Record model API: the starter uses GORM generics in feature stores, with pgx available for focused SQL and sessions. ORM records remain separate from public DTOs and pure domain values.
 
 ## When to Use
 
@@ -22,6 +22,8 @@ Define interfaces at the consumer only where substitution or a domain boundary h
 ## Implementation
 
 ### Basic Repository
+
+The following pgx example illustrates the consumer contract. For installed features, follow `internal/notes`: `gorm.G[record](db).Where("user_id = ?", userID)` with bound values, explicit projections and affected-row checks. Keep table/column/order expressions server-owned. Do not add AutoMigrate, business callbacks or generic CRUD interfaces.
 
 ```go
 type PostReader interface {
@@ -69,7 +71,7 @@ A complex query can be a method until it gains independent responsibility. Do no
 
 ## Transactions
 
-A multi-record operation begins one transaction and passes transaction-bound persistence to each required write. Do not accidentally call the pool from inside an operation that expects the same transaction. Ensure rollback on every error and propagate commit failure. Persist external delivery intent in the transaction; deliver afterward.
+A multi-record operation begins one transaction and passes transaction-bound persistence to each required write. Do not accidentally call the pool from inside an operation that expects the same transaction. Ensure rollback on every error and propagate commit failure. Persist external delivery intent in the transaction; deliver afterward. In this starter use `ORM.WithContext(ctx).Transaction` and pass its `*sql.Tx` to River `InsertTx`, as in `notemail.Service.Request`. A second pool operation or an enqueue after commit breaks atomicity. Goose SQL migrations own schema changes, including River migrations under the same deployment lock.
 
 For concurrent state changes use conditional UPDATE/RETURNING or a row lock. An in-memory state check followed by an unconditional update is insufficient across processes.
 

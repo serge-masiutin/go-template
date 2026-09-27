@@ -42,6 +42,14 @@ for (const filename of ["package.json", "package-lock.json"]) {
   changes.push([filename, JSON.stringify(manifest, null, 2) + "\n"]);
 }
 execFileSync("go", ["mod", "edit", "-module", modulePath]);
+execFileSync("go", [
+  "-C",
+  "tools",
+  "mod",
+  "edit",
+  "-module",
+  `${modulePath}/tools`,
+]);
 for (const [filename, contents] of changes) writeFileSync(filename, contents);
 console.log(
   `Configured ${modulePath}. Run bin/ci and review the diff before committing.`,
