@@ -17,6 +17,7 @@
 | Task | Guide | Skills |
 | --- | --- | --- |
 | Go architecture | `docs/architecture.md` | `layered-go` |
+| Data invariants, transactions, retries, and failures | `docs/architecture.md` | `data-systems-architecture`, then the relevant `layered-go` guidance |
 | Libraries, ORM, queues, AI | `docs/stack.md`, `docs/background.md`, `docs/ai.md` | `layered-go` and its `references/installed-stack.md` |
 | Pages, routes, forms | `docs/architecture.md` | `inertia-go-architecture`, then the relevant `inertia-go-*` |
 | JSON and TypeScript | `docs/architecture.md` | `go-serialization`, `inertia-go-typescript` |

@@ -120,7 +120,7 @@ The starter includes CLI-managed accounts and an admin page showing the user cou
 - [AI assistant](docs/ai.md): provider setup, tool boundaries, and evaluation.
 - [Testing](docs/testing.md): unit, integration, browser, and AI checks.
 - [Deployment](docs/deployment.md): containers, reverse proxy, process supervision, and backups.
-- [Agent skills](docs/skills.md): the 31 bundled skills, their sources, and update procedures.
+- [Agent skills](docs/skills.md): the 32 bundled skills, their sources, and update procedures.
 
 ## License
 

@@ -1,0 +1,9 @@
+--- original/agents/openai.yaml
++++ adapted/agents/openai.yaml
+@@ -1,4 +1,4 @@
+ interface:
+   display_name: "Data Systems Architecture"
+-  short_description: "Архитектура данных, транзакции и распределённые системы"
+-  default_prompt: "Используй $data-systems-architecture для проектирования или ревью архитектуры: определи инварианты, границы данных, компромиссы, поведение при сбоях и необходимые проверки."
++  short_description: "Data architecture, transactions, and failure analysis"
++  default_prompt: "Use $data-systems-architecture to design or review the system: identify invariants, data boundaries, trade-offs, failure behavior, and required validation."

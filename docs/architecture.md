@@ -1,5 +1,7 @@
 # Architecture
 
+Use the bundled [data-systems-architecture](../.agents/skills/data-systems-architecture/SKILL.md) with `layered-go` to review invariants, transaction boundaries, retries, and recovery. Trace the authoritative write and external effect separately; load only the relevant chapters. The complete skill works without its source PDF or network access. See [skill sources and maintenance](skills.md#data-systems-architecture).
+
 Go owns URLs, authentication, authorization, and data. Gonertia sends a React page name and props: the first request returns HTML, and subsequent Inertia visits return JSON. In production, the frontend and backend share one origin. There is no separate public JSON API or React Router.
 
 ## Boundaries

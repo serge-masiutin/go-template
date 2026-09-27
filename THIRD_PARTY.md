@@ -1,5 +1,7 @@
 # Third-party materials
 
+- `data-systems-architecture`: an original standalone synthesis based on Martin Kleppmann and Chris Riccomini's *Designing Data-Intensive Applications*, second edition. [Sources and coverage](.agents/skills/data-systems-architecture/SOURCES.md) record attribution and limitations. The source book and its illustrations are not included; the template license does not license the book.
+
 - Project foundation and local source skills: [serge-masiutin/rails-template](https://github.com/serge-masiutin/rails-template), MIT. Exact revisions are recorded in [skills-lock.json](config/skills-lock.json).
 - Evil Martians Agent Skills: [official catalog](https://evilmartians.com/.well-known/agent-skills/index.json) and [public repository](https://github.com/evilmartians/agent-skills). Copyright © 2026 Evil Martians; [MIT notice](third_party/licenses/evilmartians-agent-skills.txt). Original React/Storybook/general skills and adapted Inertia skills retain attribution.
 - `layered-go` is adapted from Vladimir Dementyev's (palkan) `layered-rails` through the recorded Rails-template revision. Source: [layered-rails-skills](https://github.com/palkan/layered-rails-skills). Upstream declares MIT in `layered-rails/.claude-plugin/plugin.json` and its gemspec. The method is based on *Layered Design for Ruby on Rails Applications*. The Go adaptation is not an official edition by the author or Evil Martians. Original files, author links, and changes are retained in the [provenance records](third_party/skills).

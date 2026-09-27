@@ -1,6 +1,12 @@
 # Agent skills
 
-The repository includes 31 skills in `.agents/skills`. They are copied with the GitHub template and available to agents working on the project. The template does not provide a separate skill website, discovery endpoint, or installer that changes global agent settings.
+The repository includes 32 skills in `.agents/skills`. They are copied with the GitHub template and available to agents working on the project. The template does not provide a separate skill website, discovery endpoint, or installer that changes global agent settings.
+
+## Data systems architecture
+
+Use [data-systems-architecture](../.agents/skills/data-systems-architecture/SKILL.md) to review data invariants, transaction boundaries, queues, retries, schema evolution, and recovery. It complements `layered-go`: package organization and data correctness are related but distinct concerns. Start from a concrete operation and load only the relevant bundled chapters.
+
+The complete standalone package includes 14 chapters, a glossary, patterns, a cheatsheet, decision/operation templates, and 20 evaluation cases. It requires no source book, PDF, extraction tools, or network access. [SOURCES.md](../.agents/skills/data-systems-architecture/SOURCES.md) records its basis in *Designing Data-Intensive Applications*, second edition, and the limits of that synthesis. The pinned archive preserves the original local skill; the patch changes only agent UI metadata to English.
 
 ## Original Evil Martians skills
 
